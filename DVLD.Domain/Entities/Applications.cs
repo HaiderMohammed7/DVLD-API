@@ -1,6 +1,6 @@
 ﻿namespace DVLD.Domain.Entities
 {
-    public class Application
+    public class Applications
     {
         public int ApplicationID { get; set; }
 

@@ -9,7 +9,7 @@ namespace DVLD.Infrastructure.Data
         {
         }
 
-        public DbSet<Application> Application { get; set; }
+        public DbSet<Applications> Application { get; set; }
         public DbSet<ApplicationType> ApplicationType { get; set; }
         public DbSet<Country> Country { get; set; }
         public DbSet<DetainedLicense> DetainedLicense { get; set; }

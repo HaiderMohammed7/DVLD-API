@@ -15,7 +15,7 @@ namespace DVLD.Infrastructure.Configurations
             builder.Property(x => x.LocalDrivingLicenseApplicationID)
                    .ValueGeneratedOnAdd();
 
-            builder.HasOne<Application>()
+            builder.HasOne<Applications>()
                    .WithMany()
                    .HasForeignKey(x => x.ApplicationID)
                    .OnDelete(DeleteBehavior.Restrict);

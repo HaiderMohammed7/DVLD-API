@@ -43,7 +43,7 @@ namespace DVLD.Infrastructure.Configurations
                    .HasForeignKey(x => x.ReleasedByUserID)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<Application>()
+            builder.HasOne<Applications>()
                    .WithMany()
                    .HasForeignKey(x => x.ReleaseApplicationID)
                    .OnDelete(DeleteBehavior.Restrict);

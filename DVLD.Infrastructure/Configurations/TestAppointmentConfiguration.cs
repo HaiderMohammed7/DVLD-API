@@ -44,7 +44,7 @@ namespace DVLD.Infrastructure.Configurations
                    .HasForeignKey(x => x.CreatedByUserID)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<Application>()
+            builder.HasOne<Applications>()
                    .WithMany()
                    .HasForeignKey(x => x.RetakeTestApplicationID)
                    .OnDelete(DeleteBehavior.Restrict);

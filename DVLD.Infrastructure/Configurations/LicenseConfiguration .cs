@@ -37,7 +37,7 @@ namespace DVLD.Infrastructure.Configurations
             builder.Property(x => x.IssueReason)
                    .IsRequired();
 
-            builder.HasOne<Application>()
+            builder.HasOne<Applications>()
                    .WithMany()
                    .HasForeignKey(x => x.ApplicationID)
                    .OnDelete(DeleteBehavior.Restrict);
