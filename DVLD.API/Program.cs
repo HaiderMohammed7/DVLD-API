@@ -2,6 +2,8 @@ using DVLD.API.Extensions;
 using DVLD.Application.Interfaces;
 using DVLD.Application.Services;
 using DVLD.Infrastructure.Data;
+using DVLD.Infrastructure.Persistence;
+using DVLD.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -41,7 +43,10 @@ builder.Services.AddDbContext<DVLDDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
@@ -51,6 +56,13 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var userRepo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+
+    await DbSeeder.SeedAdminAsync(userRepo);
 }
 
 app.UseHttpsRedirection();

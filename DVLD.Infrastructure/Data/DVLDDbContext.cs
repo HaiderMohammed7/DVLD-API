@@ -9,20 +9,20 @@ namespace DVLD.Infrastructure.Data
         {
         }
 
-        public DbSet<Applications> Application { get; set; }
-        public DbSet<ApplicationType> ApplicationType { get; set; }
-        public DbSet<Country> Country { get; set; }
+        public DbSet<Applications> Applications { get; set; }
+        public DbSet<ApplicationType> ApplicationTypes { get; set; }
+        public DbSet<Country> Countries { get; set; }
         public DbSet<DetainedLicense> DetainedLicense { get; set; }
-        public DbSet<Driver> Driver { get; set; }
-        public DbSet<InternationalLicense> InternationalLicense { get; set; }
+        public DbSet<Driver> Drivers { get; set; }
+        public DbSet<InternationalLicense> InternationalLicenses { get; set; }
         public DbSet<LicenseClass> LicenseClass { get; set; }
-        public DbSet<License> License { get; set; }
+        public DbSet<License> Licenses { get; set; }
         public DbSet<LocalDrivingLicenseApplication> LocalDrivingLicenseApplications { get; set; }
-        public DbSet<Person> Person { get; set; }
-        public DbSet<TestAppointment> TestAppointment { get; set; }
-        public DbSet<Test> Test { get; set; }
-        public DbSet<TestType> TestType { get; set; }
-        public DbSet<User> User { get; set; }
+        public DbSet<Person> People { get; set; }
+        public DbSet<TestAppointment> TestAppointments { get; set; }
+        public DbSet<Test> Tests { get; set; }
+        public DbSet<TestType> TestTypes { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

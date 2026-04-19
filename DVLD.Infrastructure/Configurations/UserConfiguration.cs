@@ -13,19 +13,32 @@ namespace DVLD.Infrastructure.Configurations
             builder.HasKey(x => x.UserID);
 
             builder.Property(x => x.UserID)
-                   .ValueGeneratedOnAdd();
+                .ValueGeneratedOnAdd();
 
-            builder.Property(x => x.UserName)
-                   .HasMaxLength(50)
-                   .IsRequired();
+            builder.Property(x => x.AuthUserId)
+                .IsRequired();
+
+            builder.HasIndex(x => x.AuthUserId)
+                .IsUnique();
+
+            builder.Property(x => x.PersonID)
+                .IsRequired();
+
+            builder.HasIndex(x => x.PersonID)
+                .IsUnique();
+
+            builder.Property(x => x.Role)
+                .HasConversion<string>()
+                .HasMaxLength(50)
+                .IsRequired();
 
             builder.Property(x => x.IsActive)
-                   .IsRequired();
+                .IsRequired();
 
             builder.HasOne<Person>()
-                   .WithMany()
-                   .HasForeignKey(x => x.PersonID)
-                   .OnDelete(DeleteBehavior.Restrict);
+                .WithOne()
+                .HasForeignKey<User>(x => x.PersonID)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

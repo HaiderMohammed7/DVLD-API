@@ -13,13 +13,27 @@ namespace DVLD.Application.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        private ClaimsPrincipal User => _httpContextAccessor.HttpContext?.User;
+        private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
 
-        public int AuthUserId => int.TryParse(User?.FindFirst(ClaimTypes.NameIdentifier)
-            ?.Value, out var id) ? id : 0;
+        public int AuthUserId
+        {
+            get
+            {
+                if (!IsAuthenticated)
+                    return 0;
 
-        public string Email => User?.FindFirst(ClaimTypes.Email)?.Value;
+                var userIdClaim = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
+                return int.TryParse(userIdClaim, out var id) ? id : 0;
+            }
+        }
+
+        public string? Email =>
+            IsAuthenticated
+                ? User?.FindFirst(ClaimTypes.Email)?.Value
+                : null;
+
+        public bool IsAuthenticated =>
+            User?.Identity?.IsAuthenticated ?? false;
     }
 }

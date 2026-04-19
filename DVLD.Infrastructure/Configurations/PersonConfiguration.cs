@@ -19,6 +19,9 @@ namespace DVLD.Infrastructure.Configurations
                    .HasMaxLength(20)
                    .IsRequired();
 
+            builder.HasIndex(x => x.NationalNo)
+                   .IsUnique();
+
             builder.Property(x => x.FirstName)
                    .HasMaxLength(20)
                    .IsRequired();
@@ -53,6 +56,10 @@ namespace DVLD.Infrastructure.Configurations
             builder.Property(x => x.Email)
                    .HasMaxLength(50)
                    .IsRequired(false);
+
+            builder.HasIndex(x => x.Email)
+                   .IsUnique()
+                   .HasFilter("[Email] IS NOT NULL");
 
             builder.Property(x => x.ImagePath)
                    .HasMaxLength(250)

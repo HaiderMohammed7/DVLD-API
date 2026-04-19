@@ -1,12 +1,15 @@
-﻿namespace DVLD.Domain.Entities
+﻿using DVLD.Domain.Enums;
+
+namespace DVLD.Domain.Entities
 {
     public class User
     {
         public int UserID { get; set; }
+        public int AuthUserId { get; set; }
 
         public int PersonID { get; set; }
 
-        public string UserName { get; set; } = null!;
+        public UserRole Role { get; set; }
 
         public bool IsActive { get; set; }
     }

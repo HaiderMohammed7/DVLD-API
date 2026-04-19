@@ -4,6 +4,7 @@ using DVLD.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DVLD.Infrastructure.Migrations
 {
     [DbContext(typeof(DVLDDbContext))]
-    partial class DVLDDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260415103414_UpdateUserTable")]
+    partial class UpdateUserTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -383,13 +386,6 @@ namespace DVLD.Infrastructure.Migrations
 
                     b.HasKey("PersonID");
 
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasFilter("[Email] IS NOT NULL");
-
-                    b.HasIndex("NationalNo")
-                        .IsUnique();
-
                     b.HasIndex("NationalityCountryID");
 
                     b.ToTable("People", (string)null);
@@ -520,8 +516,7 @@ namespace DVLD.Infrastructure.Migrations
                     b.HasIndex("AuthUserId")
                         .IsUnique();
 
-                    b.HasIndex("PersonID")
-                        .IsUnique();
+                    b.HasIndex("PersonID");
 
                     b.ToTable("Users", (string)null);
                 });
@@ -709,8 +704,8 @@ namespace DVLD.Infrastructure.Migrations
             modelBuilder.Entity("DVLD.Domain.Entities.User", b =>
                 {
                     b.HasOne("DVLD.Domain.Entities.Person", null)
-                        .WithOne()
-                        .HasForeignKey("DVLD.Domain.Entities.User", "PersonID")
+                        .WithMany()
+                        .HasForeignKey("PersonID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
