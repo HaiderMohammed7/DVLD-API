@@ -53,10 +53,12 @@ builder.Services.AddScoped<IPersonService, PersonService>();
 builder.Services.AddScoped<IAuthorizationHandler, OwnerOrAdminHandler>();
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
+
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("OwnerOrAdmin", policy =>
-        policy.Requirements.Add(new OwnerOrAdminRequirement()));
+    options.AddPolicy("OwnerOrAdmin", policy => policy.Requirements.Add(new OwnerOrAdminRequirement()));
+
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
 });
 
 var app = builder.Build();

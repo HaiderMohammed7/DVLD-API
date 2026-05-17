@@ -1,7 +1,6 @@
 ﻿using DVLD.Application.DTOs;
 using DVLD.Application.Interfaces;
 using DVLD.Domain.Entities;
-using DVLD.Domain.Enums;
 
 namespace DVLD.Application.Services
 {
@@ -16,16 +15,6 @@ namespace DVLD.Application.Services
             _currentUser = currentUserService;
         }
 
-        public async Task<PersonDto?> GetPersonByIdAsync(int personId)
-        {
-            var person = await _repo.GetPersonByIdAsync(personId);
-
-            if (person == null)
-                return null;
-
-            return MapToDto(person);
-        }
-
         public async Task<PersonDto> GetMyProfileAsync()
         {
             var authUserId = _currentUser.AuthUserId;
@@ -37,9 +26,36 @@ namespace DVLD.Application.Services
 
             return MapToDto(Person);
         }
-
-        public async Task<PersonDto> CreatePersonAsync(CreatePersonDto request)
+        public async Task<PersonDto?> GetByIdAsync(int personId)
         {
+            var person = await _repo.GetByIdAsync(personId);
+
+            if (person == null)
+                return null;
+
+            return MapToDto(person);
+        }
+        public async Task<PersonDto?> GetByNationalNoAsync(string nationalNo)
+        {
+            var person = await _repo.GetByNationalNoAsync(nationalNo);
+
+            if (person == null) return null;
+
+            return MapToDto(person);
+        }
+        public async Task<List<PersonDto>> GetAllAsync()
+        {
+            var people = await _repo.GetAllAsync();
+
+            return people.Select(MapToDto).ToList();
+        }
+
+        public async Task<PersonDto> CreateAsync(CreatePersonDto request)
+        {
+            var nationalNoExists = await _repo.ExistsByNationalNoAsync(request.NationalNo);
+
+            if (nationalNoExists) throw new Exception("National Number already exists");
+
             var person = new Person
             {
                 FirstName = request.FirstName,
@@ -56,14 +72,13 @@ namespace DVLD.Application.Services
                 NationalityCountryID = request.NationalityCountryID,
             };
 
-            await _repo.AddAsync(person);
+            var createdPerson = await _repo.AddAsync(person);
 
-            return MapToDto(person);
+            return MapToDto(createdPerson);
         }
-
-        public async Task<bool> UpdatePersonAsync(int personId, UpdatePersonDto request)
+        public async Task<bool> UpdateAsync( int personId, UpdatePersonDto request)
         {
-            var person = await _repo.GetPersonByIdAsync(personId);
+            var person = await _repo.GetByIdAsync(personId);
 
             if (person == null)
                 return false;
@@ -77,9 +92,25 @@ namespace DVLD.Application.Services
             person.Phone = request.Phone;
             person.ImagePath = request.ImagePath;
 
-            await _repo.UpdateAsync(person);
+            return await _repo.UpdateAsync(person);
+        }
+        public async Task<bool> DeleteAsync(int personId)
+        {
+            var exists = await _repo.ExistsByIdAsync(personId);
 
-            return true;
+            if (!exists)
+                return false;
+
+            return await _repo.DeleteAsync(personId);
+        }
+
+        public async Task<bool> ExistsByIdAsync(int personId)
+        {
+            return await _repo.ExistsByIdAsync(personId);
+        }
+        public async Task<bool> ExistsByNationalNoAsync(string nationalNo)
+        {
+            return await _repo.ExistsByNationalNoAsync(nationalNo);
         }
 
         private static PersonDto MapToDto(Person p)

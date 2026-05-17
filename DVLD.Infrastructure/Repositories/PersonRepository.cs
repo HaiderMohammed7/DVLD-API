@@ -23,10 +23,17 @@ namespace DVLD.Infrastructure.Repositories
 
             return await _context.People.FirstOrDefaultAsync(p => p.PersonID == user.PersonID);
         }
-
-        public async Task<Person?> GetPersonByIdAsync(int personId)
+        public async Task<Person?> GetByIdAsync(int personId)
         {
-            return await _context.People.FindAsync(personId);
+            return await _context.People.FirstOrDefaultAsync(p => p.PersonID == personId);
+        }
+        public async Task<Person?> GetByNationalNoAsync(string nationalNo)
+        {
+            return await _context.People.FirstOrDefaultAsync(p => p.NationalNo == nationalNo);
+        }
+        public async Task<List<Person>> GetAllAsync()
+        {
+            return await _context.People.ToListAsync();
         }
 
         public async Task<Person> AddAsync(Person person)
@@ -36,11 +43,38 @@ namespace DVLD.Infrastructure.Repositories
 
             return person;
         }
-
-        public async Task UpdateAsync(Person person)
+        public async Task<bool> UpdateAsync(Person person)
         {
-            _context.People.Update(person);
+            var existingPerson = await _context.People.FirstOrDefaultAsync(p => p.PersonID == person.PersonID);
+
+            if (existingPerson == null) return false;
+
+            _context.Entry(existingPerson).CurrentValues.SetValues(person);
+
             await _context.SaveChangesAsync();
+
+            return true;
+        }
+        public async Task<bool> DeleteAsync(int personId)
+        {
+            var person = await _context.People.FirstOrDefaultAsync(p => p.PersonID == personId);
+
+            if (person == null) return false;
+
+            _context.People.Remove(person);
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> ExistsByNationalNoAsync(string nationalNo)
+        {
+            return await _context.People.AnyAsync(p => p.NationalNo == nationalNo);
+        }
+        public async Task<bool> ExistsByIdAsync(int personId)
+        {
+            return await _context.People.AnyAsync(p => p.PersonID == personId);
         }
     }
 }
