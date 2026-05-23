@@ -25,7 +25,7 @@ namespace DVLD.Infrastructure.Repositories
         }
         public async Task<Person?> GetByIdAsync(int personId)
         {
-            return await _context.People.FirstOrDefaultAsync(p => p.PersonID == personId);
+            return await _context.People.FindAsync(personId);
         }
         public async Task<Person?> GetByNationalNoAsync(string nationalNo)
         {
@@ -45,7 +45,7 @@ namespace DVLD.Infrastructure.Repositories
         }
         public async Task<bool> UpdateAsync(Person person)
         {
-            var existingPerson = await _context.People.FirstOrDefaultAsync(p => p.PersonID == person.PersonID);
+            var existingPerson = await _context.People.FindAsync(person.PersonID);
 
             if (existingPerson == null) return false;
 
@@ -57,7 +57,7 @@ namespace DVLD.Infrastructure.Repositories
         }
         public async Task<bool> DeleteAsync(int personId)
         {
-            var person = await _context.People.FirstOrDefaultAsync(p => p.PersonID == personId);
+            var person = await _context.People.FindAsync(personId);
 
             if (person == null) return false;
 
