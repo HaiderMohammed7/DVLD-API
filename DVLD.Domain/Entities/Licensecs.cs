@@ -3,25 +3,23 @@
     public class License
     {
         public int LicenseID { get; set; }
-
         public int ApplicationID { get; set; }
-
         public int DriverID { get; set; }
-
         public int LicenseClass { get; set; }
-
         public DateTime IssueDate { get; set; }
-
         public DateTime ExpirationDate { get; set; }
-
         public string Notes { get; set; } = null!;
-
         public decimal PaidFees { get; set; }
-
         public bool IsActive { get; set; }
-
         public byte IssueReason { get; set; }
-
         public int CreatedByUserID { get; set; }
+
+        public User? User { get; set; }
+        public LicenseClass? Classes { get; set; }
+        public Applications? Applications { get; set; }
+        public Driver? Driver { get; set; }
+
+        public ICollection<InternationalLicense> InternationalLicenses { get; set; } = new List<InternationalLicense>();
+        public ICollection<DetainedLicense> DetainedLicenses { get; set; } = new List<DetainedLicense>();
     }
 }

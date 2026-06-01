@@ -33,7 +33,7 @@ namespace DVLD.Infrastructure.Repositories
         }
         public async Task<List<Person>> GetAllAsync()
         {
-            return await _context.People.ToListAsync();
+            return await _context.People.AsNoTracking().ToListAsync();
         }
 
         public async Task<Person> AddAsync(Person person)
@@ -43,17 +43,9 @@ namespace DVLD.Infrastructure.Repositories
 
             return person;
         }
-        public async Task<bool> UpdateAsync(Person person)
+        public async Task<bool> UpdateAsync()
         {
-            var existingPerson = await _context.People.FindAsync(person.PersonID);
-
-            if (existingPerson == null) return false;
-
-            _context.Entry(existingPerson).CurrentValues.SetValues(person);
-
-            await _context.SaveChangesAsync();
-
-            return true;
+            return await _context.SaveChangesAsync() > 0;
         }
         public async Task<bool> DeleteAsync(int personId)
         {

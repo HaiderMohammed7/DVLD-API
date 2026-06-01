@@ -128,7 +128,7 @@ namespace DVLD.Application.Services
 
             user.IsActive = true;
 
-            await _userRepository.UpdateAsync(user);
+            await _userRepository.UpdateAsync();
         }
 
         public async Task DeactivateUserAsync(int userId)
@@ -143,7 +143,7 @@ namespace DVLD.Application.Services
 
             user.IsActive = false;
 
-            await _userRepository.UpdateAsync(user);
+            await _userRepository.UpdateAsync();
         }
 
         public async Task AssignRoleAsync(int userId, UserRole role)
@@ -155,7 +155,7 @@ namespace DVLD.Application.Services
 
             user.Role = role;
 
-            await _userRepository.UpdateAsync(user);
+            await _userRepository.UpdateAsync();
         }
     }
 }

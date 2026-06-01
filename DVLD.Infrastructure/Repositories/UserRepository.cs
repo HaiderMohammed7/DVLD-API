@@ -32,9 +32,8 @@ namespace DVLD.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(User user)
+        public async Task UpdateAsync()
         {
-            _context.Users.Update(user);
             await _context.SaveChangesAsync();
         }
     }

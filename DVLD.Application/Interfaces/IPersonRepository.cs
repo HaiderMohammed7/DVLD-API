@@ -10,7 +10,7 @@ namespace DVLD.Application.Interfaces
         Task<List<Person>> GetAllAsync();
 
         Task<Person> AddAsync(Person person);
-        Task<bool> UpdateAsync(Person person);
+        Task<bool> UpdateAsync();
         Task<bool> DeleteAsync(int personId);
 
         Task<bool> ExistsByNationalNoAsync(string nationalNo);

@@ -92,7 +92,7 @@ namespace DVLD.Application.Services
             person.Phone = request.Phone;
             person.ImagePath = request.ImagePath;
 
-            return await _repo.UpdateAsync(person);
+            return await _repo.UpdateAsync();
         }
         public async Task<bool> DeleteAsync(int personId)
         {
