@@ -23,13 +23,13 @@ namespace DVLD.Infrastructure.Configurations
                    .HasMaxLength(500)
                    .IsRequired(false);
 
-            builder.HasOne<TestAppointment>()
-                   .WithMany()
+            builder.HasOne(x => x.TestAppointment)
+                   .WithMany(x => x.Tests)
                    .HasForeignKey(x => x.TestAppointmentID)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<User>()
-                   .WithMany()
+            builder.HasOne(x => x.User)
+                   .WithMany(x => x.CreatedTests)
                    .HasForeignKey(x => x.CreatedByUserID)
                    .OnDelete(DeleteBehavior.Restrict);
         }

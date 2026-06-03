@@ -21,7 +21,7 @@ namespace DVLD.Domain.Entities
 
         public Country Country { get; set; } = null!;
         public User? User { get; set; }
-        public Driver? Driver { get; set; }
+        public ICollection<Driver> Driver { get; set; } = new List<Driver>();
         public ICollection<Applications> Applications { get; set; } = new List<Applications>();
     }
 }

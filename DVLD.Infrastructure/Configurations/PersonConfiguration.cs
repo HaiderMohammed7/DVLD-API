@@ -65,8 +65,8 @@ namespace DVLD.Infrastructure.Configurations
                    .HasMaxLength(250)
                    .IsRequired(false);
 
-            builder.HasOne<Country>()
-                   .WithMany()
+            builder.HasOne(x => x.Country)
+                   .WithMany(x => x.People)
                    .HasForeignKey(x => x.NationalityCountryID)
                    .OnDelete(DeleteBehavior.Restrict);
         }

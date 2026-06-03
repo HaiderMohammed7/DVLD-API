@@ -14,6 +14,7 @@
         public TestType? TestType { get; set; }
         public Applications? Applications { get; set; }
         public User? User { get; set; }
+        public LocalDrivingLicenseApplication? localDrivingLicenseApplication { get; set; }
         public ICollection<Test> Tests { get; set; } = new List<Test>();
     }
 }

@@ -37,23 +37,23 @@ namespace DVLD.Infrastructure.Configurations
             builder.Property(x => x.IssueReason)
                    .IsRequired();
 
-            builder.HasOne<Applications>()
-                   .WithMany()
+            builder.HasOne(x => x.Applications)
+                   .WithMany(x => x.Licenses)
                    .HasForeignKey(x => x.ApplicationID)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<Driver>()
-                   .WithMany()
+            builder.HasOne(x => x.Driver)
+                   .WithMany(x => x.Licenses)
                    .HasForeignKey(x => x.DriverID)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<LicenseClass>()
-                   .WithMany()
+            builder.HasOne(x => x.Classes)
+                   .WithMany(x => x.Licenses)
                    .HasForeignKey(x => x.LicenseClass)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<User>()
-                   .WithMany()
+            builder.HasOne(x => x.User)
+                   .WithMany(x => x.CreatedLicenses)
                    .HasForeignKey(x => x.CreatedByUserID)
                    .OnDelete(DeleteBehavior.Restrict);
         }

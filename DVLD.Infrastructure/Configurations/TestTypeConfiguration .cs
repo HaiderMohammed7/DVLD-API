@@ -12,7 +12,6 @@ namespace DVLD.Infrastructure.Configurations
 
             builder.HasKey(x => x.TestTypeID);
 
-
             builder.Property(x => x.TestTypeID)
                    .ValueGeneratedOnAdd();
 

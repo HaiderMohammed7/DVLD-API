@@ -10,7 +10,7 @@ namespace DVLD.Domain.Entities
         public UserRole Role { get; set; }
         public bool IsActive { get; set; }
 
-        public Person? Person { get; set; }
+        public Person Person { get; set; } = null!;
 
         public ICollection<Applications> CreatedApplications { get; set; } = new List<Applications>();
         public ICollection<Driver> CreatedDrivers { get; set; } = new List<Driver>();

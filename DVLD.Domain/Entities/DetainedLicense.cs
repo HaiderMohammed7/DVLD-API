@@ -15,5 +15,6 @@
 
         public User? User { get; set; }
         public Applications? Applications { get; set; }
+        public License? License { get; set; }
     }
 }

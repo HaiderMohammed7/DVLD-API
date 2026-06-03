@@ -28,18 +28,18 @@ namespace DVLD.Infrastructure.Configurations
                    .HasColumnType("smallmoney")
                    .IsRequired();
 
-            builder.HasOne<Person>()
-                   .WithMany()
+            builder.HasOne(x => x.Person)
+                   .WithMany(x => x.Applications)
                    .HasForeignKey(x => x.ApplicantPersonID)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<ApplicationType>()
-                   .WithMany()
+            builder.HasOne(x => x.ApplicationType)
+                   .WithMany(x => x.Applications)
                    .HasForeignKey(x => x.ApplicationTypeID)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<User>()
-                   .WithMany()
+            builder.HasOne(x => x.User)
+                   .WithMany(x => x.CreatedApplications)
                    .HasForeignKey(x => x.CreatedByUserID)
                    .OnDelete(DeleteBehavior.Restrict);
         }

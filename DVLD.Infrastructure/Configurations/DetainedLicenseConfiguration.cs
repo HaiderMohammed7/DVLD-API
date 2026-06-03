@@ -28,18 +28,18 @@ namespace DVLD.Infrastructure.Configurations
             builder.Property(x => x.ReleaseDate)
                    .IsRequired(false);
 
-            builder.HasOne<License>()
-                   .WithMany()
+            builder.HasOne(x => x.License)
+                   .WithMany(x => x.DetainedLicenses)
                    .HasForeignKey(x => x.LicenseID)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<User>()
-                   .WithMany()
+            builder.HasOne(x => x.User)
+                   .WithMany(x => x.CreatedDetainedLicenses)
                    .HasForeignKey(x => x.CreatedByUserID)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<User>()
-                   .WithMany()
+            builder.HasOne(x => x.User)
+                   .WithMany(x => x.CreatedDetainedLicenses)
                    .HasForeignKey(x => x.ReleasedByUserID)
                    .OnDelete(DeleteBehavior.Restrict);
 

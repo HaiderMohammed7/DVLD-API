@@ -19,13 +19,13 @@ namespace DVLD.Infrastructure.Configurations
                    .HasColumnType("smalldatetime")
                    .IsRequired();
 
-            builder.HasOne<Person>()
-                   .WithMany()
+            builder.HasOne(x => x.Person)
+                   .WithMany(x => x.Driver)
                    .HasForeignKey(x => x.PersonID)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<User>()
-                   .WithMany()
+            builder.HasOne(x => x.User)
+                   .WithMany(x => x.CreatedDrivers)
                    .HasForeignKey(x => x.CreatedByUserID)
                    .OnDelete(DeleteBehavior.Restrict);
         }

@@ -35,8 +35,8 @@ namespace DVLD.Infrastructure.Configurations
             builder.Property(x => x.IsActive)
                 .IsRequired();
 
-            builder.HasOne<Person>()
-                .WithOne()
+            builder.HasOne(x => x.Person)
+                .WithOne(x => x.User)
                 .HasForeignKey<User>(x => x.PersonID)
                 .OnDelete(DeleteBehavior.Restrict);
         }

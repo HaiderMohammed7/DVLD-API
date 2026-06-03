@@ -15,13 +15,13 @@ namespace DVLD.Infrastructure.Configurations
             builder.Property(x => x.LocalDrivingLicenseApplicationID)
                    .ValueGeneratedOnAdd();
 
-            builder.HasOne<Applications>()
-                   .WithMany()
+            builder.HasOne(x => x.Applications)
+                   .WithMany(x => x.localDrivingLicenseApplications)
                    .HasForeignKey(x => x.ApplicationID)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne<LicenseClass>()
-                   .WithMany()
+            builder.HasOne(x => x.LicenseClass)
+                   .WithMany(x => x.localDrivingLicenseApplications)
                    .HasForeignKey(x => x.LicenseClassID)
                    .OnDelete(DeleteBehavior.Restrict);
         }
