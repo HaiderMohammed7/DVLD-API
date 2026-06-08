@@ -136,5 +136,13 @@ namespace DVLD.API.Controllers
 
             return Ok(exists);
         }
+
+        [HttpGet("{id}/CountryName")]
+        public async Task<IActionResult> GetCountryName(int id)
+        {
+            var result = await _personService.GetCountryNameByIdAsync(id);
+
+            return Ok(result);
+        }
     }
 }

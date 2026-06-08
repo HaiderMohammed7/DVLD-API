@@ -7,7 +7,7 @@ namespace DVLD.Application.Interfaces
         Task<PersonDto> GetMyProfileAsync();
         Task<PersonDto?> GetByIdAsync(int personId);
         Task<PersonDto?> GetByNationalNoAsync(string nationalNo);
-        Task<List<PersonDto?>> GetAllAsync();
+        Task<List<PeopleListDto?>> GetAllAsync();
         
         Task<PersonDto> CreateAsync(CreatePersonDto request);
         Task<bool> UpdateAsync(int personId, UpdatePersonDto request);
@@ -15,5 +15,6 @@ namespace DVLD.Application.Interfaces
 
         Task<bool> ExistsByIdAsync(int personId);
         Task<bool> ExistsByNationalNoAsync(string nationalNo);
+        Task<string?> GetCountryNameByIdAsync(int personId);
     }
 }

@@ -1,4 +1,5 @@
-﻿using DVLD.Application.Interfaces;
+﻿using DVLD.Application.DTOs;
+using DVLD.Application.Interfaces;
 using DVLD.Domain.Entities;
 using DVLD.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -31,9 +32,30 @@ namespace DVLD.Infrastructure.Repositories
         {
             return await _context.People.FirstOrDefaultAsync(p => p.NationalNo == nationalNo);
         }
-        public async Task<List<Person>> GetAllAsync()
+        public async Task<List<PeopleListDto>> GetAllAsync()
         {
-            return await _context.People.AsNoTracking().ToListAsync();
+            return await _context.People.AsNoTracking()
+                .Select(p => new PeopleListDto
+                    {
+                        PersonID = p.PersonID,
+                        NationalNo = p.NationalNo,
+                        FirstName = p.FirstName,
+                        SecondName = p.SecondName,
+                        ThirdName = p.ThirdName,
+                        LastName = p.LastName,
+
+                        DateOfBirth = p.DateOfBirth,
+
+                        Gender = p.Gendor == 0
+                            ? "Female"
+                            : "Male",
+
+                        Phone = p.Phone,
+                        Email = p.Email,
+                        
+                        Nationality = p.Country.CountryName
+
+                    }).ToListAsync();
         }
 
         public async Task<Person> AddAsync(Person person)
@@ -53,11 +75,9 @@ namespace DVLD.Infrastructure.Repositories
 
             if (person == null) return false;
 
-            _context.People.Remove(person);
+            _context.People.Remove(person);       
 
-            await _context.SaveChangesAsync();
-
-            return true;
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> ExistsByNationalNoAsync(string nationalNo)
@@ -67,6 +87,11 @@ namespace DVLD.Infrastructure.Repositories
         public async Task<bool> ExistsByIdAsync(int personId)
         {
             return await _context.People.AnyAsync(p => p.PersonID == personId);
+        }
+
+        public async Task<string?> GetCountryNameByIdAsync(int personId)
+        {
+            return await _context.People.Where(p => p.PersonID == personId).Select(p => p.Country.CountryName).FirstOrDefaultAsync();
         }
     }
 }

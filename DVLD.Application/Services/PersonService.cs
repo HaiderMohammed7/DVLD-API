@@ -8,11 +8,13 @@ namespace DVLD.Application.Services
     {
         private readonly IPersonRepository _repo;
         private readonly ICurrentUserService _currentUser;
+        private readonly ICountryRepositroy _country;
 
-        public PersonService(IPersonRepository repo, ICurrentUserService currentUserService)
+        public PersonService(IPersonRepository repo, ICurrentUserService currentUserService, ICountryRepositroy country)
         {
             _repo = repo;
             _currentUser = currentUserService;
+            _country = country;
         }
 
         public async Task<PersonDto> GetMyProfileAsync()
@@ -43,18 +45,14 @@ namespace DVLD.Application.Services
 
             return MapToDto(person);
         }
-        public async Task<List<PersonDto>> GetAllAsync()
+        public async Task<List<PeopleListDto?>> GetAllAsync()
         {
-            var people = await _repo.GetAllAsync();
-
-            return people.Select(MapToDto).ToList();
+            return await _repo.GetAllAsync();
         }
 
         public async Task<PersonDto> CreateAsync(CreatePersonDto request)
         {
-            var nationalNoExists = await _repo.ExistsByNationalNoAsync(request.NationalNo);
-
-            if (nationalNoExists) throw new Exception("National Number already exists");
+            await ValidateCreateRequestAsync(request);
 
             var person = new Person
             {
@@ -83,6 +81,9 @@ namespace DVLD.Application.Services
             if (person == null)
                 return false;
 
+            await ValidateUpdateRequestAsync(personId, request);
+
+            person.NationalNo = request.NationalNo;
             person.FirstName = request.FirstName;
             person.SecondName = request.SecondName;
             person.ThirdName = request.ThirdName;
@@ -91,6 +92,9 @@ namespace DVLD.Application.Services
             person.Address = request.Address;
             person.Phone = request.Phone;
             person.ImagePath = request.ImagePath;
+            person.DateOfBirth = request.DateOfBirth;
+            person.Gendor = request.Gendor;
+            person.NationalityCountryID = request.NationalityCountryID;
 
             return await _repo.UpdateAsync();
         }
@@ -119,7 +123,10 @@ namespace DVLD.Application.Services
             {
                 PersonID = p.PersonID,
                 NationalNo = p.NationalNo,
-                FullName = string.Join(" ",new[]{p.FirstName, p.SecondName,p.ThirdName,p.LastName}.Where(x => !string.IsNullOrWhiteSpace(x))),
+                FirstName = p.FirstName,
+                SecondName = p.SecondName,
+                ThirdName = p.ThirdName,
+                LastName = p.LastName,
                 DateOfBirth = p.DateOfBirth,
                 Gendor = p.Gendor,
                 Address = p.Address,
@@ -128,6 +135,82 @@ namespace DVLD.Application.Services
                 NationalityCountryID = p.NationalityCountryID,
                 ImagePath = p.ImagePath
             };
+        }
+
+        private async Task ValidateCreateRequestAsync(CreatePersonDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NationalNo))
+                throw new Exception("National Number is required");
+
+            var nationalNoExists = await _repo.ExistsByNationalNoAsync(request.NationalNo);
+            if (nationalNoExists) throw new Exception("National Number already exists");
+
+
+            if (request.NationalityCountryID <= 0)
+                throw new Exception("Nationality is required");
+
+            if (!await _country.ExistsAsync(request.NationalityCountryID))
+                throw new Exception("Invalid country");
+
+            if (request.DateOfBirth >= DateTime.Today)
+                throw new Exception("Invalid date of birth");
+
+            if (string.IsNullOrWhiteSpace(request.FirstName))
+                throw new Exception("First Name is required");
+
+            if (string.IsNullOrWhiteSpace(request.SecondName))
+                throw new Exception("Second Name is required");
+
+            if (string.IsNullOrWhiteSpace(request.LastName))
+                throw new Exception("Last Name is required");
+
+            if (string.IsNullOrWhiteSpace(request.Phone))
+                throw new Exception("Phone is required");
+
+            if (string.IsNullOrWhiteSpace(request.Address))
+                throw new Exception("Address is required");
+        }
+
+        private async Task ValidateUpdateRequestAsync(int personId,UpdatePersonDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NationalNo))
+                throw new Exception("National Number is required");
+
+            var personWithSameNationalNo = await _repo.GetByNationalNoAsync(request.NationalNo);
+
+            if (personWithSameNationalNo != null && personWithSameNationalNo.PersonID != personId)
+            {
+                throw new Exception("National Number already exists");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.FirstName))
+                throw new Exception("First Name is required");
+
+            if (string.IsNullOrWhiteSpace(request.SecondName))
+                throw new Exception("Second Name is required");
+
+            if (string.IsNullOrWhiteSpace(request.LastName))
+                throw new Exception("Last Name is required");
+
+            if (string.IsNullOrWhiteSpace(request.Phone))
+                throw new Exception("Phone is required");
+
+            if (string.IsNullOrWhiteSpace(request.Address))
+                throw new Exception("Address is required");
+
+            if (request.NationalityCountryID <= 0)
+                throw new Exception("Nationality is required");
+
+            if (!await _country.ExistsAsync(request.NationalityCountryID))
+                throw new Exception("Invalid country");
+
+            if (request.DateOfBirth >= DateTime.Today)
+                throw new Exception("Invalid date of birth");
+        }
+
+        public async Task<string?> GetCountryNameByIdAsync(int personId)
+        {
+            return await _repo.GetCountryNameByIdAsync(personId);
         }
     }
 }
