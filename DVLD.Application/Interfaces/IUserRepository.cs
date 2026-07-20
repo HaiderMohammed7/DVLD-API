@@ -7,9 +7,14 @@ namespace DVLD.Application.Interfaces
         Task<User?> GetByPersonIdAsync(int personId);
         Task<User?> GetByIdAsync(int userId);
         Task<User?> GetByAuthUserIdAsync(int authUserId);
+        Task<List<User>> GetAllUsers();
+        Task<User?> GetUserByIdAsync(int userId);
 
-        Task AddAsync(User user);
+        Task<User> AddAsync(User user);
+        Task<bool> UpdateAsync();
+        Task<bool> DeleteAsync(int userId);
 
-        Task UpdateAsync();
+        Task<bool> IsUserExist(int userId);
+        Task<bool> IsUserExistForPersonId(int personId);
     }
 }

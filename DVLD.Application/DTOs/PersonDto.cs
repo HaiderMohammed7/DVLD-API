@@ -1,6 +1,8 @@
-﻿namespace DVLD.Application.DTOs
+﻿using DVLD.Domain.Contracts;
+
+namespace DVLD.Application.DTOs
 {
-    public class PersonDto
+    public class PersonDto : IOwnable<int>
     {
         public int PersonID { get; set; }
         public string NationalNo { get; set; } = null!;
@@ -15,5 +17,7 @@
         public string? Email { get; set; }
         public int NationalityCountryID { get; set; }
         public string? ImagePath { get; set; }
+
+        public int OwnerId => PersonID;
     }
 }

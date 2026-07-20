@@ -2,6 +2,7 @@ using DVLD.API.Extensions;
 using DVLD.Application.Interfaces;
 using DVLD.Application.Services;
 using DVLD.Infrastructure.Data;
+using DVLD.Infrastructure.HTTPClient;
 using DVLD.Infrastructure.Persistence;
 using DVLD.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -56,6 +57,11 @@ builder.Services.AddScoped<ICountryRepositroy, CountryRepository>();
 
 builder.Services.AddScoped<IAuthorizationHandler, OwnerOrAdminHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, AdminHandler>();
+
+builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Auth_API:BaseUrl"]!);
+});
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 

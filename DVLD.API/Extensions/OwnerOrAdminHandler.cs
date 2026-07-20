@@ -1,12 +1,12 @@
-﻿using DVLD.Application.DTOs;
-using DVLD.Application.Interfaces;
+﻿using DVLD.Application.Interfaces;
+using DVLD.Domain.Contracts;
 using DVLD.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
 namespace DVLD.API.Extensions
 {
-    public class OwnerOrAdminHandler : AuthorizationHandler<OwnerOrAdminRequirement, PersonDto>
+    public class OwnerOrAdminHandler : AuthorizationHandler<OwnerOrAdminRequirement, IOwnable<int>>
     {
         private readonly IUserRepository _userRepo;
 
@@ -15,7 +15,7 @@ namespace DVLD.API.Extensions
             _userRepo = userRepo;
         }
 
-        protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context,OwnerOrAdminRequirement requirement, PersonDto person)
+        protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context,OwnerOrAdminRequirement requirement, IOwnable<int> resource)
         {
             var authUserIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
 
@@ -35,7 +35,7 @@ namespace DVLD.API.Extensions
                 return;
             }
 
-            if (user.PersonID == person.PersonID)
+            if (user.PersonID == resource.OwnerId)
             {
                 context.Succeed(requirement);
             }

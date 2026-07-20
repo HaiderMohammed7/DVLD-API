@@ -1,7 +1,8 @@
-﻿using DVLD.Application.Interfaces;
+﻿using DVLD.Application.DTOs;
+using DVLD.Application.Interfaces;
+using DVLD.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using DVLD.Application.DTOs;
 
 namespace DVLD.API.Controllers
 {
@@ -11,11 +12,85 @@ namespace DVLD.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IAuthorizationService _authorizationService;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, IAuthorizationService authorizationService)
         {
             _userService = userService;
+            _authorizationService = authorizationService;
         }
+
+
+
+        [HttpGet("me")]
+        public async Task<IActionResult> Me()
+        {
+            var user = await _userService.GetCurrentUserAsync();
+
+            return Ok(new CurrentUserDto
+            {
+                UserID = user.UserID,
+                PersonID = user.PersonID,
+                AuthUserId = user.AuthUserId
+            });
+        }
+
+
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var user = await _userService.GetUserByIdAsync(id);
+
+            if (user is null)
+                return NotFound();
+
+            var authResult = await _authorizationService.AuthorizeAsync(User, user, "OwnerOrAdmin");
+
+            if (!authResult.Succeeded)
+                return Forbid();
+
+            return Ok(user);
+        }
+
+        [HttpGet("person/{id}")]
+        public async Task<IActionResult> GetByPersonId(int id)
+        {
+            var user = await _userService.GetUserByPersonIdAsync(id);
+
+            if (user is null)
+                return NotFound();
+
+            var authResult = await _authorizationService.AuthorizeAsync(User, user, "OwnerOrAdmin");
+
+            if (!authResult.Succeeded)
+                return Forbid();
+
+            return Ok(user);
+        }
+
+        [Authorize(Policy = "AdminOnly")]
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var result = await _userService.GetAllAsync();
+
+            return Ok(result);
+        }
+
+        [Authorize(Policy = "AdminOnly")]
+        [HttpGet("withUsername/{id}")]
+        public async Task<IActionResult> GetUserById(int id)
+        {
+            var user = await _userService.GetByIdAsync(id);
+
+            if (user == null)
+                return NotFound();
+
+            return Ok(user);
+        }
+
+
 
         [HttpPost]
         public async Task<IActionResult> CreateUser(CreateUserDto dto)
@@ -28,38 +103,86 @@ namespace DVLD.API.Controllers
             return Ok(new { userId });
         }
 
-        [HttpPost("me")]
-        public async Task<IActionResult> RegisterMe([FromBody] RegisterMeDto dto)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, User request)
         {
-            var user = await _userService.EnsureUserExistsAsync(dto.PersonId);
+            var user = await _userService.GetUserByIdAsync(id);
 
-            return Ok(new
-            {
-                userId = user.UserID,
-                role = user.Role,
-                isActive = user.IsActive
-            });
+            if (user is null)
+                return NotFound();
+
+            var authResult = await _authorizationService.AuthorizeAsync(User, user, "OwnerOrAdmin");
+
+            if (!authResult.Succeeded)
+                return Forbid();
+
+            await _userService.UpdateAsync(id, request);
+
+            return NoContent();
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var user = await _userService.GetUserByIdAsync(id);
+
+            if (user is null)
+                return NotFound();
+
+            var authResult = await _authorizationService.AuthorizeAsync(User, user, "OwnerOrAdmin");
+
+            if (!authResult.Succeeded)
+                return Forbid();
+
+            var deleted = await _userService.DeleteAsync(id);
+
+            return NoContent();
+        }
+
+
+
+        [Authorize(Policy = "AdminOnly")]
         [HttpPut("{id}/activate")]
         public async Task<IActionResult> Activate(int id)
         {
             await _userService.ActivateUserAsync(id);
-            return NoContent();
+            return Ok();
         }
+
+        [Authorize(Policy = "AdminOnly")]
         [HttpPut("{id}/deactivate")]
         public async Task<IActionResult> Deactivate(int id)
         {
             await _userService.DeactivateUserAsync(id);
-            return NoContent();
+            return Ok();
         }
 
-
+        [Authorize(Policy = "AdminOnly")]
         [HttpPut("{id}/role")]
         public async Task<IActionResult> AssignRole(int id, AssignRoleDto dto)
         {
             await _userService.AssignRoleAsync(id, dto.Role);
-            return NoContent();
+            return Ok();
+        }
+
+
+
+        [Authorize(Policy = "AdminOnly")]
+        [HttpGet("{id}/exists")]
+        public async Task<IActionResult> ExistsById(int id)
+        {
+            var exists = await _userService.ExistsByIdAsync(id);
+
+            return Ok(exists);
+        }
+
+        [Authorize(Policy = "AdminOnly")]
+        [HttpGet("PersonId/{PersonId}/exists")]
+        public async Task<IActionResult> ExistsByPersonId(int PersonId)
+        {
+            var exists = await _userService.ExistsByPersonIdAsync(PersonId);
+
+            return Ok(exists);
         }
     }
 }

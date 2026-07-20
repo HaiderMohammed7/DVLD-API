@@ -13,9 +13,10 @@ namespace DVLD.Infrastructure.Repositories
             _context = context;
         }
 
+
         public async Task<User?> GetByPersonIdAsync(int PersonId)
         {
-            return await _context.Users.FindAsync(PersonId);
+            return await _context.Users.FirstOrDefaultAsync(u => u.PersonID == PersonId);
         }
         public async Task<User?> GetByIdAsync(int userId)
         {
@@ -25,16 +26,44 @@ namespace DVLD.Infrastructure.Repositories
         {
             return await _context.Users.FirstOrDefaultAsync(x => x.AuthUserId == authUserId);
         }
-
-        public async Task AddAsync(User user)
+        public async Task<List<User>> GetAllUsers()
         {
-            await _context.Users.AddAsync(user);
-            await _context.SaveChangesAsync();
+            return await _context.Users.Include(u => u.Person).AsNoTracking().ToListAsync();
+        }
+        public async Task<User?> GetUserByIdAsync(int userId)
+        {
+            return await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserID == userId);
         }
 
-        public async Task UpdateAsync()
+        public async Task<User> AddAsync(User user)
         {
+            _context.Users.Add(user);
             await _context.SaveChangesAsync();
+
+            return user;
+        }
+        public async Task<bool> UpdateAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
+        public async Task<bool> DeleteAsync(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null) return false;
+
+            _context.Users.Remove(user);
+
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> IsUserExist(int userId)
+        {
+            return await _context.Users.AsNoTracking().AnyAsync(u => u.UserID == userId);
+        }
+        public async Task<bool> IsUserExistForPersonId(int personId)
+        {
+            return await _context.Users.AsNoTracking().AnyAsync(u => u.PersonID == personId);
         }
     }
 }
