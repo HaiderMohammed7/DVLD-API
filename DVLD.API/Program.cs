@@ -58,10 +58,11 @@ builder.Services.AddScoped<ICountryRepositroy, CountryRepository>();
 builder.Services.AddScoped<IAuthorizationHandler, OwnerOrAdminHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, AdminHandler>();
 
+builder.Services.AddTransient<AuthTokenForwardingHandler>();
 builder.Services.AddHttpClient<IAuthApiClient, AuthApiClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Auth_API:BaseUrl"]!);
-});
+}).AddHttpMessageHandler<AuthTokenForwardingHandler>();
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 

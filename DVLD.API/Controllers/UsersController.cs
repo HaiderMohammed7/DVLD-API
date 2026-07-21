@@ -184,5 +184,13 @@ namespace DVLD.API.Controllers
 
             return Ok(exists);
         }
+
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
+        {
+            await _userService.ChangePasswordAsync(dto);
+
+            return Ok();
+        }
     }
 }

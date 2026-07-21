@@ -40,5 +40,11 @@ namespace DVLD.Infrastructure.HTTPClient
 
             return await response.Content.ReadFromJsonAsync<UserBasicInfoDto>();
         }
+        public async Task ChangePasswordAsync(ChangePasswordDto dto)
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/auth/change-password", dto);
+
+            response.EnsureSuccessStatusCode();
+        }
     }
 }

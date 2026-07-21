@@ -24,5 +24,7 @@ namespace DVLD.Application.Interfaces
 
         Task<bool> ExistsByIdAsync(int uersId);
         Task<bool> ExistsByPersonIdAsync(int personId);
+
+        Task ChangePasswordAsync(ChangePasswordDto dto);
     }
 }

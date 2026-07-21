@@ -234,5 +234,10 @@ namespace DVLD.Application.Services
                 IsActive = u.IsActive,
             };
         }
+
+        public async Task ChangePasswordAsync(ChangePasswordDto dto)
+        {
+            await _authApiClient.ChangePasswordAsync(dto);
+        }
     }
 }
