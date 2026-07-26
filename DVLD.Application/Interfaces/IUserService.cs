@@ -14,7 +14,7 @@ namespace DVLD.Application.Interfaces
         Task<List<UserListDto>> GetAllAsync();
         Task<UserInfoDto?> GetByIdAsync(int userId);
 
-        Task<int> CreateUserAsync(int newAuthUserId, int personId, UserRole role);
+        Task<int> CreateUserAsync(CreateUserDto dto);
         Task<bool> UpdateAsync(int userId, User request);
         Task<bool> DeleteAsync(int userId);
 

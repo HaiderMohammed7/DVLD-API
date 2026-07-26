@@ -46,5 +46,15 @@ namespace DVLD.Infrastructure.HTTPClient
 
             response.EnsureSuccessStatusCode();
         }
+        public async Task<int> RegisterAsync(RegisterUserDto dto)
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/auth/register", dto);
+
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResponseDto<int>>();
+
+            return result!.Data;
+        }
     }
 }

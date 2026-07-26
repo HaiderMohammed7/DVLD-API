@@ -95,12 +95,9 @@ namespace DVLD.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateUser(CreateUserDto dto)
         {
-            var userId = await _userService.CreateUserAsync(
-                dto.AuthUserId,
-                dto.PersonId,
-                dto.Role);
+            var userId = await _userService.CreateUserAsync(dto);
 
-            return Ok(new { userId });
+            return Ok(userId);
         }
 
         [HttpPut("{id}")]

@@ -10,13 +10,15 @@ namespace DVLD.Application.Services
         private readonly IUserRepository _userRepository;
         private readonly ICurrentUserService _currentUser;
         private readonly IAuthApiClient _authApiClient;
+        private readonly IPersonRepository _personRepository;
 
         public UserService(IUserRepository userRepository, ICurrentUserService currentUser,
-            IAuthApiClient authApiClient)
+            IAuthApiClient authApiClient, IPersonRepository personRepository)
         {
             _userRepository = userRepository;
             _currentUser = currentUser;
             _authApiClient = authApiClient;
+            _personRepository = personRepository;
         }
 
         public async Task<User> EnsureUserExistsAsync(int personId)
@@ -140,32 +142,34 @@ namespace DVLD.Application.Services
             };
         }
 
-        public async Task<int> CreateUserAsync(int newAuthUserId, int personId, UserRole role)
+        public async Task<int> CreateUserAsync(CreateUserDto dto)
         {
-            var currentUser = await GetCurrentUserAsync();
-            EnsureAdmin(currentUser);
+            var person = await _personRepository.GetByIdAsync(dto.PersonId);
 
-            if (newAuthUserId == _currentUser.AuthUserId)
-                throw new Exception("You cannot create a user for yourself");
+            if (person == null)
+                throw new Exception("Person not found.");
 
-            var existingAuth = await _userRepository
-                .GetByAuthUserIdAsync(newAuthUserId);
-
-            if (existingAuth != null)
-                throw new Exception("Auth user already exists");
-
-            var existingPerson = await _userRepository
-                .GetByPersonIdAsync(personId);
+            var existingPerson = await _userRepository.GetByPersonIdAsync(dto.PersonId);
 
             if (existingPerson != null)
                 throw new Exception("Person already linked to another user");
 
+            var currentUser = await GetCurrentUserAsync();
+            EnsureAdmin(currentUser);         
+
+            var authUserId = await _authApiClient.RegisterAsync(new RegisterUserDto
+            {
+                userName = dto.UserName,
+                email = dto.Email,
+                password = dto.Password
+            });
+
             var user = new User
             {
-                AuthUserId = newAuthUserId,
-                PersonID = personId,
-                Role = role,
-                IsActive = true
+                AuthUserId = authUserId,
+                PersonID = dto.PersonId,
+                Role = UserRole.User,
+                IsActive = dto.IsActive
             };
 
             await _userRepository.AddAsync(user);
