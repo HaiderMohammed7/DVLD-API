@@ -42,19 +42,15 @@ namespace DVLD.Infrastructure.Repositories
 
             return user;
         }
-        public async Task<bool> UpdateAsync()
+        public async Task UpdateAsync()
         {
-            return await _context.SaveChangesAsync() > 0;
+            await _context.SaveChangesAsync();
         }
-        public async Task<bool> DeleteAsync(int userId)
+        public async Task DeleteAsync(User user)
         {
-            var user = await _context.Users.FindAsync(userId);
-
-            if (user == null) return false;
-
             _context.Users.Remove(user);
 
-            return await _context.SaveChangesAsync() > 0;
+            await _context.SaveChangesAsync();
         }
 
         public async Task<bool> IsUserExist(int userId)

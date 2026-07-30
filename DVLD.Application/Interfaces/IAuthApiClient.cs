@@ -8,5 +8,7 @@ namespace DVLD.Application.Interfaces
         Task<UserBasicInfoDto?> GetUserByIdAsync(int userId);
         Task ChangePasswordAsync(ChangePasswordDto dto);
         Task<int> RegisterAsync(RegisterUserDto dto);
+        Task UpdateUserAsync(int authUserId, UpdateAuthUserDto dto);
+        Task DeleteUserAsync(int authUserId);
     }
 }

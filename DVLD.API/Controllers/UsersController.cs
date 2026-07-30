@@ -1,6 +1,5 @@
 ﻿using DVLD.Application.DTOs;
 using DVLD.Application.Interfaces;
-using DVLD.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -101,7 +100,7 @@ namespace DVLD.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, User request)
+        public async Task<IActionResult> UpdateUser(int id, UpdateUserDto dto)
         {
             var user = await _userService.GetUserByIdAsync(id);
 
@@ -113,53 +112,23 @@ namespace DVLD.API.Controllers
             if (!authResult.Succeeded)
                 return Forbid();
 
-            await _userService.UpdateAsync(id, request);
+            await _userService.UpdateAsync(id, dto);
 
             return NoContent();
         }
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteUser(int id)
         {
             var user = await _userService.GetUserByIdAsync(id);
 
-            if (user is null)
+            if (user == null)
                 return NotFound();
 
-            var authResult = await _authorizationService.AuthorizeAsync(User, user, "OwnerOrAdmin");
-
-            if (!authResult.Succeeded)
-                return Forbid();
-
-            var deleted = await _userService.DeleteAsync(id);
+            await _userService.DeleteAsync(id);
 
             return NoContent();
-        }
-
-
-
-        [Authorize(Policy = "AdminOnly")]
-        [HttpPut("{id}/activate")]
-        public async Task<IActionResult> Activate(int id)
-        {
-            await _userService.ActivateUserAsync(id);
-            return Ok();
-        }
-
-        [Authorize(Policy = "AdminOnly")]
-        [HttpPut("{id}/deactivate")]
-        public async Task<IActionResult> Deactivate(int id)
-        {
-            await _userService.DeactivateUserAsync(id);
-            return Ok();
-        }
-
-        [Authorize(Policy = "AdminOnly")]
-        [HttpPut("{id}/role")]
-        public async Task<IActionResult> AssignRole(int id, AssignRoleDto dto)
-        {
-            await _userService.AssignRoleAsync(id, dto.Role);
-            return Ok();
         }
 
 

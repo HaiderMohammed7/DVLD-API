@@ -11,8 +11,8 @@ namespace DVLD.Application.Interfaces
         Task<User?> GetUserByIdAsync(int userId);
 
         Task<User> AddAsync(User user);
-        Task<bool> UpdateAsync();
-        Task<bool> DeleteAsync(int userId);
+        Task UpdateAsync();
+        Task DeleteAsync(User user);
 
         Task<bool> IsUserExist(int userId);
         Task<bool> IsUserExistForPersonId(int personId);

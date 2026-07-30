@@ -176,23 +176,39 @@ namespace DVLD.Application.Services
 
             return user.UserID;
         }
-        public async Task<bool> UpdateAsync(int userId, User request)
+        public async Task UpdateAsync(int id, UpdateUserDto dto)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+
+            if (user == null)
+                throw new Exception("User not found");
+
+            await _authApiClient.UpdateUserAsync(user.AuthUserId, new UpdateAuthUserDto
+            {
+                UserName = dto.UserName,
+                Email = dto.Email,
+            });
+
+            user.IsActive = dto.IsActive;
+
+            await _userRepository.UpdateAsync();
+        }
+        public async Task DeleteAsync(int userId)
         {
             var user = await _userRepository.GetByIdAsync(userId);
 
             if (user == null)
-                return false;
+                throw new Exception("User not found.");
 
-            user.AuthUserId = request.AuthUserId;
-            user.PersonID = request.PersonID;
-            user.Role = request.Role;
-            user.IsActive = request.IsActive;
+            var currentUser = await GetCurrentUserAsync();
+            EnsureAdmin(currentUser);
 
-            return await _userRepository.UpdateAsync();
-        }
-        public async Task<bool> DeleteAsync(int userId)
-        {
-            return await _userRepository.DeleteAsync(userId);
+            if (user.UserID == currentUser.UserID)
+                throw new Exception("You cannot delete your own account.");
+
+            await _authApiClient.DeleteUserAsync(user.AuthUserId);
+
+            await _userRepository.DeleteAsync(user);
         }
         
         public async Task ActivateUserAsync(int userId)

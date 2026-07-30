@@ -56,5 +56,17 @@ namespace DVLD.Infrastructure.HTTPClient
 
             return result!.Data;
         }
+        public async Task UpdateUserAsync(int authUserId, UpdateAuthUserDto dto)
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/auth/{authUserId}", dto);
+
+            response.EnsureSuccessStatusCode();
+        }
+        public async Task DeleteUserAsync(int authUserId)
+        {
+            var response = await _httpClient.DeleteAsync($"api/auth/{authUserId}");
+
+            response.EnsureSuccessStatusCode();
+        }
     }
 }
