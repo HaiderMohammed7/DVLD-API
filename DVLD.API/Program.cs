@@ -49,10 +49,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPersonService, PersonService>();
+builder.Services.AddScoped<IApplicationTypeService, ApplicationTypeService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 builder.Services.AddScoped<ICountryRepositroy, CountryRepository>();
+builder.Services.AddScoped<IApplicationTypeRepository, ApplicationTypeRepository>();
 
 
 builder.Services.AddScoped<IAuthorizationHandler, OwnerOrAdminHandler>();
