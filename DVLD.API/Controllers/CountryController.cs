@@ -1,8 +1,5 @@
 ﻿using DVLD.Application.Interfaces;
-using DVLD.Application.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DVLD.API.Controllers
