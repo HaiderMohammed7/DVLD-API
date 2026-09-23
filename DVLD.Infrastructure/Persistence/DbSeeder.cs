@@ -1,4 +1,4 @@
-﻿using DVLD.Application.Interfaces;
+﻿using DVLD.Application.Interfaces.Repositories;
 using DVLD.Domain.Entities;
 using DVLD.Domain.Enums;
 

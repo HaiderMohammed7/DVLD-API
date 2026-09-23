@@ -1,5 +1,7 @@
-﻿using DVLD.Application.DTOs;
-using DVLD.Application.Interfaces;
+﻿using DVLD.Application.Features.Auth.DTOs;
+using DVLD.Application.Features.Common.DTOs;
+using DVLD.Application.Features.Users.DTOs;
+using DVLD.Application.Interfaces.Repositories;
 using System.Net;
 using System.Net.Http.Json;
 

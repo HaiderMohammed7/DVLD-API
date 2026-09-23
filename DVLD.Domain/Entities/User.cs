@@ -20,6 +20,7 @@ namespace DVLD.Domain.Entities
         public ICollection<License> CreatedLicenses { get; set; } = new List<License>();
         public ICollection<InternationalLicense> CreatedInternationalLicenses { get; set; } = new List<InternationalLicense>();
         public ICollection<DetainedLicense> CreatedDetainedLicenses { get; set; } = new List<DetainedLicense>();
+        public ICollection<DetainedLicense> ReleasedDetainedLicenses { get; set; } = new List<DetainedLicense>();
 
         public int OwnerId => PersonID;
     }

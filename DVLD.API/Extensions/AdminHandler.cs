@@ -1,4 +1,4 @@
-﻿using DVLD.Application.Interfaces;
+﻿using DVLD.Application.Interfaces.Repositories;
 using DVLD.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;

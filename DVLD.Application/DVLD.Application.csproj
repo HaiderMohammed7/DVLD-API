@@ -11,11 +11,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Exceptions\" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.9" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.9" />
+    <Folder Include="Exceptions\" />
+    <Folder Include="Features\Common\Interfaces\" />
+    <Folder Include="Features\Common\Services\" />
   </ItemGroup>
 
 </Project>

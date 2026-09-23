@@ -13,7 +13,9 @@
         public int? ReleaseApplicationID { get; set; }
 
 
-        public User? User { get; set; }
+        public User? CreatedByUser { get; set; }
+        public User? ReleasedByUser { get; set; }
+
         public Applications? Applications { get; set; }
         public License? License { get; set; }
     }
