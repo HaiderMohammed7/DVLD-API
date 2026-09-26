@@ -1,4 +1,5 @@
 ﻿using DVLD.Application.DTOs;
+using DVLD.Application.Features.Driver.DTOs;
 using DVLD.Application.Features.Driver.Interfaces;
 using DVLD.Application.Interfaces.Repositories;
 
@@ -29,6 +30,19 @@ namespace DVLD.Application.Features.Driver.Services
         public async Task<List<DriverListDto>> GetAllAsync()
         {
             return await _DriverRepository.GetAllDrivers();
+        }
+
+        public async Task<DriverInfoDto> GetDriverByIdAsync(int driverId)
+        {
+            var driver = await _DriverRepository.GetByIdAsync(driverId);
+            if (driver == null) throw new KeyNotFoundException($"Driver with ID {driverId} not found.");
+
+            return new DriverInfoDto()
+            {
+                PersonId = driver.PersonID,
+                CreatedUserId = driver.CreatedByUserID,
+                CreatedDate = driver.CreatedDate,
+            };
         }
     }
 }

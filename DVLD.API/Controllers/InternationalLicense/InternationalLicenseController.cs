@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using DVLD.Application.Features.InternationalLicense.DTOs;
 using DVLD.Application.Features.InternationalLicense.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DVLD.API.Controllers.InternationalLicense
 {
@@ -20,6 +21,20 @@ namespace DVLD.API.Controllers.InternationalLicense
         {
             var result = await _internationalLicenseService.GetInternationalLicenseInfoAsync(internationalLicenseId);
             if (result == null) return NotFound("International License not found.");
+            return Ok(result);
+        }
+
+        [HttpPost("Issue")]
+        public async Task<IActionResult> IssueInternationalLicense(IssueInternationalLicenseDto dto)
+        {
+            var internationalLicenseId = await _internationalLicenseService.IssueInternationalLicenseAsync(dto.LocalLicenseID);
+            return Ok(internationalLicenseId);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var result = await _internationalLicenseService.GetAllAsync();
             return Ok(result);
         }
     }

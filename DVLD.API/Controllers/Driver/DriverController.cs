@@ -35,5 +35,14 @@ namespace DVLD.API.Controllers.Driver
             var result = await _driverService.GetAllAsync();
             return Ok(result);
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetDriverById(int id)
+        {
+            var driver = await _driverService.GetDriverByIdAsync(id);
+            if (driver == null) return NotFound();
+
+            return Ok(driver);
+        }
     }
 }

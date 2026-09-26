@@ -10,5 +10,6 @@ namespace DVLD.Application.Interfaces.Repositories
         Task AddAsync(License license);
 
         Task<List<GetDriverLocalLicenseDto>> GetDriverLocalLicensesAsync(int personId);
+        Task<License?> GetValidLicenseForInternationalAsync(int licenseId);
     }
 }

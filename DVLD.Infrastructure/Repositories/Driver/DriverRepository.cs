@@ -38,5 +38,10 @@ namespace DVLD.Infrastructure.Repositories.Driver
                    IsActive = d.Licenses.Any(l => l.IsActive),
                }) .AsNoTracking().ToListAsync();
         }
+
+        public async Task<DriverEntity?> GetByIdAsync(int driverId)
+        {
+            return await _context.Drivers.FindAsync(driverId);
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using DVLD.Application.DTOs;
+using DVLD.Application.Features.Driver.DTOs;
 
 namespace DVLD.Application.Features.Driver.Interfaces
 {
@@ -8,5 +9,6 @@ namespace DVLD.Application.Features.Driver.Interfaces
         Task<List<GetDriverLocalLicenseDto>> GetDriverLocalLicensesAsync(int personId);
 
         Task<List<DriverListDto>> GetAllAsync();
+        Task<DriverInfoDto> GetDriverByIdAsync(int driverId);
     }
 }

@@ -2,6 +2,7 @@
 using DVLD.Application.Interfaces.Repositories;
 using DVLD.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using InternationalEntity = DVLD.Domain.Entities.InternationalLicense;
 
 namespace DVLD.Infrastructure.Repositories.InternationalLicense
 {
@@ -46,6 +47,22 @@ namespace DVLD.Infrastructure.Repositories.InternationalLicense
                     ExpirationDate = il.ExpirationDate,
                     IsActive = il.IsActive
                 }).ToListAsync();
+        }
+
+        public async Task<InternationalEntity?> GetActiveByDriverIdAsync(int driverId)
+        {
+            return await _context.InternationalLicenses.FirstOrDefaultAsync(x => x.DriverID == driverId && x.IsActive);
+        }
+
+        public async Task AddAsync(InternationalEntity entity)
+        {
+            await _context.InternationalLicenses.AddAsync(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<InternationalEntity>> GetAllAsync()
+        {
+            return await _context.InternationalLicenses.AsNoTracking().ToListAsync();
         }
     }
 }

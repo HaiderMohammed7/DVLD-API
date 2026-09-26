@@ -45,6 +45,12 @@ namespace DVLD.Infrastructure.Repositories.Licenses
                     ExpirationDate = l.ExpirationDate,
                     ISActive = l.IsActive
                 }).ToListAsync();
-        } 
+        }
+
+        public async Task<License?> GetValidLicenseForInternationalAsync(int licenseId)
+        {
+            return await _context.Licenses.Include(x => x.Driver).FirstOrDefaultAsync(x => x.LicenseID == licenseId &&
+                    x.LicenseClass == 3 && x.IsActive && x.ExpirationDate > DateTime.Now);
+        }
     }
 }

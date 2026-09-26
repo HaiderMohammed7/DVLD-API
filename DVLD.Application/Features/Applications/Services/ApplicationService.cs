@@ -21,9 +21,7 @@ namespace DVLD.Application.Features.Applications.Services
         public async Task<int> CreateAsync(CreateApplicationDto dto)
         {
             var currentUser = await _userService.GetCurrentUserAsync();
-
-            if (currentUser == null)
-                throw new Exception("Current user not found.");
+            if (currentUser == null) throw new Exception("Current user not found.");
 
             var application = new ApplicationEntity
             {
@@ -38,7 +36,6 @@ namespace DVLD.Application.Features.Applications.Services
             };
 
             await _applicationRepository.AddAsync(application);
-
             return application.ApplicationID;
         }
 

@@ -8,5 +8,6 @@ namespace DVLD.Application.Interfaces.Repositories
         Task<Driver?> GetByPersonIdAsync(int personId);
         Task AddAsync(Driver driver);
         Task<List<DriverListDto>> GetAllDrivers();
+        Task<Driver?> GetByIdAsync(int driverId);
     }
 }
