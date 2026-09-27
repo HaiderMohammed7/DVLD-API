@@ -125,5 +125,14 @@ namespace DVLD.API.Controllers.LocalDrivingLicenseApplications
 
             return Ok(response);
         }
+
+        [HttpPost("Replace")]
+        public async Task<IActionResult> Replace(ReplaceLicenseDto dto)
+        {
+            var response = await _localDrivingLicenseApplicationService.ReplaceLicenseAsync(dto);
+            if (response == null) return BadRequest("License replacement failed.");
+
+            return Ok(response);
+        }
     }
 }

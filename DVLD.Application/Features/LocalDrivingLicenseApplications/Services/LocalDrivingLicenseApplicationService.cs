@@ -250,5 +250,57 @@ namespace DVLD.Application.Features.LocalDrivingLicenseApplications.Services
                 NewApplicationId = applicationId,
             };
         }
+
+        public async Task<ResponseReplaceLicenseDto?> ReplaceLicenseAsync(ReplaceLicenseDto dto)
+        {
+            var oldLicense = await _licenseRepository.GetForDetailsAsync(dto.LicenseID);
+            if (oldLicense == null) return null;
+            if (!oldLicense.IsActive)return null;
+
+            if (dto.IssueReason != IssueReasonEnum.ReplacementForDamaged && dto.IssueReason != IssueReasonEnum.ReplacementForLost) return null;
+
+            var currentUser = await _userService.GetCurrentUserAsync();
+            if (currentUser == null) return null;
+
+            ApplicationTypeEnum applicationTypeEnum;
+
+            if (dto.IssueReason == IssueReasonEnum.ReplacementForDamaged) applicationTypeEnum = ApplicationTypeEnum.ReplacementDamagedLicense;
+            else applicationTypeEnum = ApplicationTypeEnum.ReplacementLostLicense;
+
+            var applicationType = await _applicationService.GetForDetailsAsync((int)applicationTypeEnum);
+            if (applicationType == null) return null;
+
+            var applicationId = await _applicationService.CreateAsync(new CreateApplicationDto
+                {
+                    ApplicantPersonId = oldLicense.Driver!.PersonID,
+                    ApplicationTypeId = (int)applicationTypeEnum,
+                    PaidFees = applicationType.PaidFees
+                });
+
+            var newLicense = new License
+            {
+                ApplicationID = applicationId,
+                DriverID = oldLicense.DriverID,
+                LicenseClass = oldLicense.LicenseClass,
+                IssueDate = DateTime.Today,
+                ExpirationDate = oldLicense.ExpirationDate,
+                Notes = oldLicense.Notes,
+                PaidFees = oldLicense.PaidFees,
+                IsActive = true,
+                IssueReason = (byte)dto.IssueReason,
+                CreatedByUserID = currentUser.UserID
+            };
+
+            await _licenseRepository.AddAsync(newLicense);
+
+            var deactivated = await _licenseRepository.DeactivateAsync(oldLicense.LicenseID);
+            if (!deactivated) return null;
+
+            return new ResponseReplaceLicenseDto()
+            {
+                NewLicenseId = newLicense.LicenseID,
+                NewApplicationId = applicationId,
+            };
+        }
     }
 }
