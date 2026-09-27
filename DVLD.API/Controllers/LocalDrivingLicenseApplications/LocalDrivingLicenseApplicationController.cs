@@ -108,12 +108,22 @@ namespace DVLD.API.Controllers.LocalDrivingLicenseApplications
 
             return Ok(result);
         }
+
         [HttpGet("DoesPassTestType")]
         public async Task<IActionResult> DoesPassTestType(int ldlaId, int testTypeID)
         {
             bool result = await _localDrivingLicenseApplicationService.DoesPassTestType(ldlaId, testTypeID);
 
             return Ok(result);
+        }
+
+        [HttpPost("Renew")]
+        public async Task<IActionResult> Renew(RenewLocalDrivingLicenseDto dto)
+        {
+            var response = await _localDrivingLicenseApplicationService.RenewLocalDrivingLicenseAsync(dto.LicenseID,dto.Notes);
+            if (response == null) return BadRequest("License renewal failed.");
+
+            return Ok(response);
         }
     }
 }

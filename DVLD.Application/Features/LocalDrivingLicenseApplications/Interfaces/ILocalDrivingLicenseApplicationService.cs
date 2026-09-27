@@ -18,5 +18,7 @@ namespace DVLD.Application.Features.LocalDrivingLicenseApplications.Interfaces
 
         Task<bool> IsThereAnActiveScheduledTest(int ldlaId, int testTypeID);
         Task<bool> DoesPassTestType(int ldlaId, int testTypeID);
+
+        Task<ResponseRenewLicenseDto?> RenewLocalDrivingLicenseAsync(int licenseId, string? notes);
     }
 }

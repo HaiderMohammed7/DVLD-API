@@ -20,9 +20,7 @@ namespace DVLD.API.Controllers.Licenses
         public async Task<IActionResult> GetForDetails(int id)
         {
             var license = await _licenseService.GetForDetailsAsync(id);
-
-            if (license is null)
-                return NotFound();
+            if (license is null) return NotFound();
 
             return Ok(license);
         }

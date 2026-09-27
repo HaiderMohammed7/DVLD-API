@@ -17,7 +17,7 @@ namespace DVLD.Infrastructure.Repositories.Licenses
 
         public async Task<License?> GetForDetailsAsync(int licenseID)
         {
-            return await _context.Licenses.Include(x => x.Classes) .Include(x => x.Driver)
+            return await _context.Licenses.Include(x => x.Classes).Include(x => x.Driver)
                     .ThenInclude(x => x.Person).Include(x => x.DetainedLicenses).FirstOrDefaultAsync(x => x.LicenseID == licenseID);
         }
 
@@ -51,6 +51,17 @@ namespace DVLD.Infrastructure.Repositories.Licenses
         {
             return await _context.Licenses.Include(x => x.Driver).FirstOrDefaultAsync(x => x.LicenseID == licenseId &&
                     x.LicenseClass == 3 && x.IsActive && x.ExpirationDate > DateTime.Now);
+        }
+
+        public async Task<bool> DeactivateAsync(int licenseId)
+        {
+            var license = await _context.Licenses.FirstOrDefaultAsync(x => x.LicenseID == licenseId);
+            if (license == null) return false;
+
+            license.IsActive = false;
+
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

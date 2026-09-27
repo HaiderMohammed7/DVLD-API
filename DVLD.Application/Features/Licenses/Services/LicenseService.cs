@@ -51,13 +51,16 @@ namespace DVLD.Application.Features.Licenses.Services
 
                 DriverID = license.DriverID,
 
+                DefaultValidityLength = license.Classes.DefaultValidityLength,
+                ClassFees = license.Classes.ClassFees,
+
                 IsActive = license.IsActive,
 
                 IssueDate = license.IssueDate,
 
                 ExpirationDate = license.ExpirationDate,
 
-                IssueReason = license.IssueReason.ToString(),
+                IssueReason = ((IssueReasonEnum)license.IssueReason).ToString(),
 
                 IsDetained = license.DetainedLicenses.Any(x => x.IsReleased),
 

@@ -2,6 +2,7 @@
 using DVLD.Application.Features.Applications.Interfaces;
 using DVLD.Application.Features.LocalDrivingLicenseApplications.DTOs;
 using DVLD.Application.Features.LocalDrivingLicenseApplications.Interfaces;
+using DVLD.Application.Features.Users.Interfaces;
 using DVLD.Application.Interfaces.Repositories;
 using DVLD.Domain.Entities;
 using DVLD.Domain.Enums;
@@ -14,10 +15,12 @@ namespace DVLD.Application.Features.LocalDrivingLicenseApplications.Services
         private readonly IApplicationRepository _applicationRepository;
         private readonly ILocalDrivingLicenseApplicationRepository _localRepository;
         private readonly ILicenseClassRepository _licenseClassRepository;
+        private readonly ILicenseRepository _licenseRepository;
         private readonly IApplicationTypeRepository _applicationTypeRepository;
         private readonly ITestAppointmentRepository _testAppointmentRepository;
+        private readonly IUserService _userService;
 
-        public LocalDrivingLicenseApplicationService(IApplicationService applicationService, IApplicationRepository applicationRepository, ILocalDrivingLicenseApplicationRepository localRepository, ILicenseClassRepository licenseClassRepository, IApplicationTypeRepository applicationTypeRepository, ITestAppointmentRepository testAppointmentRepository)
+        public LocalDrivingLicenseApplicationService(IApplicationService applicationService, IApplicationRepository applicationRepository, ILocalDrivingLicenseApplicationRepository localRepository, ILicenseClassRepository licenseClassRepository, IApplicationTypeRepository applicationTypeRepository, ITestAppointmentRepository testAppointmentRepository, ILicenseRepository licenseRepository, IUserService userService)
         {
             _applicationService = applicationService;
             _applicationRepository = applicationRepository;
@@ -25,6 +28,8 @@ namespace DVLD.Application.Features.LocalDrivingLicenseApplications.Services
             _licenseClassRepository = licenseClassRepository;
             _applicationTypeRepository = applicationTypeRepository;
             _testAppointmentRepository = testAppointmentRepository;
+            _licenseRepository = licenseRepository;
+            _userService = userService;
         }
 
         public async Task<int> AddAsync(CreateLocalDrivingLicenseApplicationDto dto)
@@ -199,6 +204,51 @@ namespace DVLD.Application.Features.LocalDrivingLicenseApplications.Services
         public async Task<bool> DoesPassTestType(int ldlaId, int testTypeID)
         {
             return await _localRepository.DoesPassTestType(ldlaId, testTypeID);
+        }
+
+        public async Task<ResponseRenewLicenseDto?> RenewLocalDrivingLicenseAsync(int licenseId, string? notes)
+        {
+            var oldLicense = await _licenseRepository.GetForDetailsAsync(licenseId);
+            if (oldLicense == null) return null;
+            if (oldLicense.ExpirationDate.Date >= DateTime.Today) return null;
+
+            var currentUser = await _userService.GetCurrentUserAsync();
+            if (currentUser == null) return null;
+
+            var applicationType = await _applicationTypeRepository.GetByIdAsync((int)ApplicationTypeEnum.RenewDrivingLicense);
+            if (applicationType == null) return null;
+
+            var applicationId = await _applicationService.CreateAsync(new CreateApplicationDto
+                {
+                    ApplicantPersonId = oldLicense.Driver!.PersonID,
+                    ApplicationTypeId = (int)ApplicationTypeEnum.RenewDrivingLicense,
+                    PaidFees = applicationType.ApplicationFees
+                });  
+
+            var newLicense = new License
+            {
+                ApplicationID = applicationId,
+                DriverID = oldLicense.DriverID,
+                LicenseClass = oldLicense.LicenseClass,
+                IssueDate = DateTime.Today,
+                ExpirationDate = DateTime.Today.AddYears(oldLicense.Classes!.DefaultValidityLength),
+                Notes = notes ?? string.Empty,
+                PaidFees = oldLicense.Classes.ClassFees,
+                IsActive = true,
+                IssueReason = (byte)IssueReasonEnum.Renew,
+                CreatedByUserID = currentUser.UserID,
+            };
+
+            await _licenseRepository.AddAsync(newLicense);
+
+            var deactivated = await _licenseRepository.DeactivateAsync(oldLicense.LicenseID);
+            if (!deactivated) return null;
+
+            return new ResponseRenewLicenseDto()
+            {
+                NewLicenseId = newLicense.LicenseID,
+                NewApplicationId = applicationId,
+            };
         }
     }
 }
