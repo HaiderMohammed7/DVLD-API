@@ -1,11 +1,14 @@
-﻿using DVLD.Application.Features.Applications.Interfaces;
+﻿using DVLD.Application.DTOs;
+using DVLD.Application.Features.Applications.DTOs;
+using DVLD.Application.Features.Applications.Interfaces;
 using DVLD.Application.Features.Licenses.DTOs;
 using DVLD.Application.Features.Licenses.Interfaces;
 using DVLD.Application.Features.Users.Interfaces;
 using DVLD.Application.Interfaces.Repositories;
 using DVLD.Domain.Entities;
-using DriverEntity = DVLD.Domain.Entities.Driver;
 using DVLD.Domain.Enums;
+using DriverEntity = DVLD.Domain.Entities.Driver;
+using LicenseEntity = DVLD.Domain.Entities.License;
 
 namespace DVLD.Application.Features.Licenses.Services
 {
@@ -17,8 +20,9 @@ namespace DVLD.Application.Features.Licenses.Services
         private readonly IUserService _userService;
         private readonly ILicenseClassRepository _licenseClassRepository;
         private readonly IApplicationService _applicationService;
+        private readonly IApplicationTypeService _applicationTypeService;
         private readonly IDetainedLicenseRepository _detainedLicenseRepository;
-        public LicenseService(ILicenseRepository licenseRepository, ILocalDrivingLicenseApplicationRepository ldlaRepository, IDriverRepository driverRepository, IUserService userService, ILicenseClassRepository licenseClassRepository, IApplicationService applicationService, IDetainedLicenseRepository detainedLicenseRepository)
+        public LicenseService(ILicenseRepository licenseRepository, ILocalDrivingLicenseApplicationRepository ldlaRepository, IDriverRepository driverRepository, IUserService userService, ILicenseClassRepository licenseClassRepository, IApplicationService applicationService, IDetainedLicenseRepository detainedLicenseRepository, IApplicationTypeService applicationTypeService)
         {
             _licenseRepository = licenseRepository;
             _ldlaRepository = ldlaRepository;
@@ -27,6 +31,7 @@ namespace DVLD.Application.Features.Licenses.Services
             _licenseClassRepository = licenseClassRepository;
             _applicationService = applicationService;
             _detainedLicenseRepository = detainedLicenseRepository;
+            _applicationTypeService = applicationTypeService;
         }
 
         public async Task<GetLicenseInfoDto?> GetForDetailsAsync(int licenseID)
@@ -111,7 +116,7 @@ namespace DVLD.Application.Features.Licenses.Services
 
             var issueDate = DateTime.Now;
 
-            var license = new License
+            var license = new LicenseEntity
             {
                 ApplicationID = ldla.Applications.ApplicationID,
                 DriverID = driver.DriverID,
@@ -157,6 +162,73 @@ namespace DVLD.Application.Features.Licenses.Services
             await _detainedLicenseRepository.AddAsync(detainedLicense);
 
             return detainedLicense.DetainID;
+        }
+
+        public async Task<int> ReleaseDetainedLicenseAsync(int licenseID)
+        {
+            var detainedLicense = await _detainedLicenseRepository.GetActiveDetainByLicenseIdAsync(licenseID);
+            if (detainedLicense == null) return -1;
+
+            var currentUser = await _userService.GetCurrentUserAsync();
+            if (currentUser == null) throw new Exception("Current user not found.");
+
+            var applicationType = await _applicationTypeService.GetByIdAsync((int)ApplicationTypeEnum.ReleaseDetainedLicense);
+            if (applicationType == null) throw new Exception("Application type not found.");
+
+            var applicationId = await _applicationService.CreateAsync(new CreateApplicationDto
+                {
+                    ApplicantPersonId = detainedLicense.License.Driver.PersonID,
+                    ApplicationTypeId =(int)ApplicationTypeEnum.ReleaseDetainedLicense,
+                    PaidFees = applicationType.Fees
+                });
+
+            var dto = new UpdateDetainLicenseDto()
+            {
+                DetainId = detainedLicense.DetainID,
+                releaseDate = DateTime.UtcNow,
+                ReleasedByUserId = currentUser.UserID,
+                ReleaseApplicationId = applicationId,
+            };
+
+            await _detainedLicenseRepository.UpdateForReleaseAsync(dto);
+
+            return applicationId;
+        }
+
+        public async Task<GetReleaseLicenseInfo?> ReleaseInfo(int licenseId)
+        {
+            var detainedLicense = await _detainedLicenseRepository.GetActiveDetainByLicenseIdAsync(licenseId);
+            if (detainedLicense == null) return null;
+
+            var applicationType = await _applicationTypeService.GetByIdAsync((int)ApplicationTypeEnum.ReleaseDetainedLicense);
+            if (applicationType == null) throw new Exception("Application type not found.");
+
+            return new GetReleaseLicenseInfo()
+            {
+                DetainId = detainedLicense.DetainID,
+                DetainDate = detainedLicense.DetainDate,
+                FineFees = detainedLicense.FineFees,
+                ApplicationFees = applicationType.Fees
+            };
+        }
+
+        public async Task<List<DetainedListDto>> GetDetainedList()
+        {
+            var lists = await _detainedLicenseRepository.GetDetainedList();
+
+            return lists.Select(x => new DetainedListDto
+            {
+                DetainId = x.DetainID,
+                DetinDate = x.DetainDate,
+                ReleaseApplicationId = x.ReleaseApplicationID ?? 0,
+                ReleaseDate = x.ReleaseDate,
+                IsRelease = x.IsReleased,
+                FineFees = x.FineFees,
+                LicenseId = x.LicenseID,
+                NationalNo = x.License.Driver.Person.NationalNo,
+                FullName = x.License.Driver.Person.FirstName + " " + x.License.Driver.Person.SecondName
+                + " " + x.License.Driver.Person.ThirdName + " " + x.License.Driver.Person.LastName,
+            }).ToList();
         }
     }
 }

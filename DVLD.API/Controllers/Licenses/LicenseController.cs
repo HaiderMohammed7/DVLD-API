@@ -40,5 +40,30 @@ namespace DVLD.API.Controllers.Licenses
 
             return Ok(detainId);
         }
+
+        [HttpPost("Release")]
+        public async Task<IActionResult> Release(ReleaseDetainedLicenseDto dto)
+        {
+            var applicationId = await _licenseService.ReleaseDetainedLicenseAsync(dto.licenseId);
+            if (applicationId == -1) return BadRequest("License is not detained.");
+
+            return Ok(applicationId);
+        }
+
+        [HttpGet("ReleaseInfo/{id}")]
+        public async Task<IActionResult> ReleaseInfo(int id)
+        {
+            var license = await _licenseService.ReleaseInfo(id);
+            if (license is null) return NotFound();
+
+            return Ok(license);
+        }
+
+        [HttpGet("GetDetainedList")]
+        public async Task<IActionResult> GetAll()
+        {
+            var result = await _licenseService.GetDetainedList();
+            return Ok(result);
+        }
     }
 }
