@@ -23,6 +23,7 @@ using DVLD.Infrastructure.HTTPClient;
 using DVLD.Infrastructure.Persistence;
 using DVLD.Infrastructure.Repositories.Applications;
 using DVLD.Infrastructure.Repositories.Countries;
+using DVLD.Infrastructure.Repositories.DetainedLicense;
 using DVLD.Infrastructure.Repositories.Driver;
 using DVLD.Infrastructure.Repositories.InternationalLicense;
 using DVLD.Infrastructure.Repositories.Licenses;
@@ -96,6 +97,7 @@ builder.Services.AddScoped<IApplicationRepository, ApplicationRepository>();
 builder.Services.AddScoped<ILicenseClassRepository, LicenseClassRepository>();
 builder.Services.AddScoped<ILicenseRepository, LicenseRepository>();
 builder.Services.AddScoped<IDriverRepository, DriverRepository>();
+builder.Services.AddScoped<IDetainedLicenseRepository, DetainedLicenseRepository>();
 builder.Services.AddScoped<IInternationalLicenseRepository, InternationalLicenseRepoistory>();
 builder.Services.AddScoped<ILocalDrivingLicenseApplicationRepository, LocalDrivingLicenseApplicationRepository>();
 

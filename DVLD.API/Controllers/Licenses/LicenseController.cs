@@ -31,5 +31,14 @@ namespace DVLD.API.Controllers.Licenses
             var licenseID = await _licenseService.IssueDriverLicenseAsync(dto);
             return Ok(licenseID);
         }
+
+        [HttpPost("Detain")]
+        public async Task<IActionResult> Detain(DetainLicenseDto dto)
+        {
+            var detainId = await _licenseService.DetainLicenseAsync(dto);
+            if (detainId == -1) return BadRequest("License could not be detained.");
+
+            return Ok(detainId);
+        }
     }
 }

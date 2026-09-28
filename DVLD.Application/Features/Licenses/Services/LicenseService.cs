@@ -17,7 +17,8 @@ namespace DVLD.Application.Features.Licenses.Services
         private readonly IUserService _userService;
         private readonly ILicenseClassRepository _licenseClassRepository;
         private readonly IApplicationService _applicationService;
-        public LicenseService(ILicenseRepository licenseRepository, ILocalDrivingLicenseApplicationRepository ldlaRepository, IDriverRepository driverRepository, IUserService userService, ILicenseClassRepository licenseClassRepository, IApplicationService applicationService)
+        private readonly IDetainedLicenseRepository _detainedLicenseRepository;
+        public LicenseService(ILicenseRepository licenseRepository, ILocalDrivingLicenseApplicationRepository ldlaRepository, IDriverRepository driverRepository, IUserService userService, ILicenseClassRepository licenseClassRepository, IApplicationService applicationService, IDetainedLicenseRepository detainedLicenseRepository)
         {
             _licenseRepository = licenseRepository;
             _ldlaRepository = ldlaRepository;
@@ -25,6 +26,7 @@ namespace DVLD.Application.Features.Licenses.Services
             _userService = userService;
             _licenseClassRepository = licenseClassRepository;
             _applicationService = applicationService;
+            _detainedLicenseRepository = detainedLicenseRepository;
         }
 
         public async Task<GetLicenseInfoDto?> GetForDetailsAsync(int licenseID)
@@ -62,7 +64,7 @@ namespace DVLD.Application.Features.Licenses.Services
 
                 IssueReason = ((IssueReasonEnum)license.IssueReason).ToString(),
 
-                IsDetained = license.DetainedLicenses.Any(x => x.IsReleased),
+                IsDetained = license.DetainedLicenses.Any(x => !x.IsReleased),
 
                 Notes = license.Notes,
 
@@ -129,6 +131,32 @@ namespace DVLD.Application.Features.Licenses.Services
             if (!updated) throw new Exception("Failed to update application status.");
 
             return license.LicenseID;
+        }
+
+        public async Task<int> DetainLicenseAsync(DetainLicenseDto dto)
+        {
+            var license = await _licenseRepository.GetForDetailsAsync(dto.LicenseID);
+            if (license == null)return -1;
+            if (!license.IsActive)return -1;
+
+            var activeDetain = await _detainedLicenseRepository.GetActiveDetainByLicenseIdAsync(dto.LicenseID);
+            if (activeDetain != null) return -1;
+
+            var currentUser = await _userService.GetCurrentUserAsync();
+            if (currentUser == null) return -1;
+
+            var detainedLicense = new DetainedLicense
+            {
+                LicenseID = dto.LicenseID,
+                DetainDate = DateTime.UtcNow,
+                FineFees = dto.FineFees,
+                CreatedByUserID = currentUser.UserID,
+                IsReleased = false
+            };
+
+            await _detainedLicenseRepository.AddAsync(detainedLicense);
+
+            return detainedLicense.DetainID;
         }
     }
 }

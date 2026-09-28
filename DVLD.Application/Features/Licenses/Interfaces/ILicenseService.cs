@@ -6,5 +6,6 @@ namespace DVLD.Application.Features.Licenses.Interfaces
     {
         Task<GetLicenseInfoDto?> GetForDetailsAsync(int licenseID);
         Task<int> IssueDriverLicenseAsync(IssueDriverLicenseDto dto);
+        Task<int> DetainLicenseAsync(DetainLicenseDto dto);
     }
 }
