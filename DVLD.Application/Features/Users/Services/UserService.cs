@@ -2,7 +2,9 @@
 using DVLD.Application.Features.Auth.Interfaces;
 using DVLD.Application.Features.Users.DTOs;
 using DVLD.Application.Features.Users.Interfaces;
+using DVLD.Application.Interfaces.HTTPClient;
 using DVLD.Application.Interfaces.Repositories;
+using DVLD.Application.Interfaces.UintOfWork;
 using DVLD.Domain.Entities;
 using DVLD.Domain.Enums;
 
@@ -14,16 +16,18 @@ namespace DVLD.Application.Features.Users.Services
         private readonly ICurrentUserService _currentUser;
         private readonly IAuthApiClient _authApiClient;
         private readonly IPersonRepository _personRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public UserService(IUserRepository userRepository, ICurrentUserService currentUser, IAuthApiClient authApiClient, IPersonRepository personRepository)
+        public UserService(IUserRepository userRepository, ICurrentUserService currentUser, IAuthApiClient authApiClient, IPersonRepository personRepository, IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
             _currentUser = currentUser;
             _authApiClient = authApiClient;
             _personRepository = personRepository;
+            _unitOfWork = unitOfWork;
         }
 
-        public async Task<User> EnsureUserExistsAsync(int personId)
+        public async Task<User> EnsureExistsAsync(int personId)
         {
             if (!_currentUser.IsAuthenticated)
                 throw new UnauthorizedAccessException("User not authenticated");
@@ -54,55 +58,62 @@ namespace DVLD.Application.Features.Users.Services
             };
 
             await _userRepository.AddAsync(newUser);
+            await _unitOfWork.SaveChangesAsync();
 
             return newUser;
         }
-        private void EnsureAdmin(User user)
-        {
-            if (user.Role != UserRole.Admin)
-                throw new UnauthorizedAccessException("Only Admin can perform this action");
-        }
 
-        public async Task<User> GetCurrentUserAsync()
+        public async Task<CurrentUserDto> GetCurrentUserAsync()
         {
-            if (!_currentUser.IsAuthenticated)
-                throw new UnauthorizedAccessException("User is not authenticated");
+            if (!_currentUser.IsAuthenticated) throw new UnauthorizedAccessException("User is not authenticated");
 
             var user = await _userRepository.GetByAuthUserIdAsync(_currentUser.AuthUserId);
+            if (user == null) throw new UnauthorizedAccessException("User not found in DVLD");
+            if (!user.IsActive) throw new UnauthorizedAccessException("User is inactive");
 
-            if (user == null)
-                throw new UnauthorizedAccessException("User not found in DVLD");
-
-            if (!user.IsActive)
-                throw new UnauthorizedAccessException("User is inactive");
-
-            return user;
+            return new CurrentUserDto()
+            {
+                UserID = user.UserID,
+                PersonID = user.PersonID,
+                AuthUserId = user.AuthUserId,
+                Role = user.Role.ToString(),
+            };
         }
-        public async Task<UserDto> GetUserByIdAsync(int userId)
+        public async Task<UserDto?> GetByIdAsync(int userId)
         {
             var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null) return null;
 
-            if (user == null)
-                throw new KeyNotFoundException($"User with ID {userId} not found.");
-
-            return MapToDto(user);
+            return new UserDto
+            {
+                UserId = user.UserID,
+                PersonId = user.PersonID,
+                AuthUserId = user.AuthUserId,
+                Role = user.Role.ToString(),
+                IsActive = user.IsActive,
+            };
         }
-        public async Task<UserDto> GetUserByPersonIdAsync(int personID)
+        public async Task<UserDto?> GetByPersonIdAsync(int personId)
         {
-            var user = await _userRepository.GetByPersonIdAsync(personID);
+            var user = await _userRepository.GetByPersonIdAsync(personId);
+            if (user == null) return null;
 
-            if (user == null)
-                throw new KeyNotFoundException($"User with Person ID {personID} not found.");
-
-            return MapToDto(user);
+            return new UserDto
+            {
+                UserId = user.UserID,
+                PersonId = user.PersonID,
+                AuthUserId = user.AuthUserId,
+                Role = user.Role.ToString(),
+                IsActive = user.IsActive,
+            };
         }
         public async Task<List<UserListDto>> GetAllAsync()
         {
-            var users = await _userRepository.GetAllUsers();
+            var users = await _userRepository.GetAllAsync();
 
             var authUserIds = users.Select(u => u.AuthUserId).Distinct().ToList();
 
-            var authUsers = await _authApiClient.GetUsersBasicInfoAsync(authUserIds);
+            var authUsers = await _authApiClient.GetBasicInfoAsync(authUserIds);
 
             var result = users.Select(user =>
             {
@@ -126,14 +137,12 @@ namespace DVLD.Application.Features.Users.Services
 
             return result;
         }
-        public async Task<UserInfoDto?> GetByIdAsync(int userId)
+        public async Task<UserInfoDto?> GetInfoByIdAsync(int userId)
         {
-            var user = await _userRepository.GetUserByIdAsync(userId);
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null) return null;
 
-            if (user == null)
-                return null;
-
-            var authUser = await _authApiClient.GetUserByIdAsync(user.AuthUserId);
+            var authUser = await _authApiClient.GetByIdAsync(user.AuthUserId);
 
             return new UserInfoDto
             {
@@ -144,20 +153,16 @@ namespace DVLD.Application.Features.Users.Services
             };
         }
 
-        public async Task<int> CreateUserAsync(CreateUserDto dto)
+        public async Task<int> CreateAsync(CreateUserDto dto)
         {
             var person = await _personRepository.GetByIdAsync(dto.PersonId);
-
-            if (person == null)
-                throw new Exception("Person not found.");
+            if (person == null) throw new Exception("Person not found.");
 
             var existingPerson = await _userRepository.GetByPersonIdAsync(dto.PersonId);
-
-            if (existingPerson != null)
-                throw new Exception("Person already linked to another user");
+            if (existingPerson != null) throw new Exception("Person already linked to another user");
 
             var currentUser = await GetCurrentUserAsync();
-            EnsureAdmin(currentUser);         
+            if (currentUser == null) throw new Exception("CurrentUser not found.");
 
             var authUserId = await _authApiClient.RegisterAsync(new RegisterUserDto
             {
@@ -175,49 +180,41 @@ namespace DVLD.Application.Features.Users.Services
             };
 
             await _userRepository.AddAsync(user);
-
+            await _unitOfWork.SaveChangesAsync();
             return user.UserID;
         }
         public async Task UpdateAsync(int id, UpdateUserDto dto)
         {
             var user = await _userRepository.GetByIdAsync(id);
+            if (user == null) throw new Exception("User not found");
 
-            if (user == null)
-                throw new Exception("User not found");
-
-            await _authApiClient.UpdateUserAsync(user.AuthUserId, new UpdateAuthUserDto
+            await _authApiClient.UpdateAsync(user.AuthUserId, new UpdateAuthUserDto
             {
                 UserName = dto.UserName,
                 Email = dto.Email,
             });
-
-            user.IsActive = dto.IsActive;
-
-            await _userRepository.UpdateAsync();
         }
         public async Task DeleteAsync(int userId)
         {
             var user = await _userRepository.GetByIdAsync(userId);
-
-            if (user == null)
-                throw new Exception("User not found.");
+            if (user == null) throw new Exception("User not found.");
 
             var currentUser = await GetCurrentUserAsync();
-            EnsureAdmin(currentUser);
+            if (currentUser == null) throw new Exception("CurrentUser not found.");
 
-            if (user.UserID == currentUser.UserID)
-                throw new Exception("You cannot delete your own account.");
+            if (user.UserID == currentUser.UserID) throw new Exception("You cannot delete your own account.");
 
-            await _authApiClient.DeleteUserAsync(user.AuthUserId);
+            await _authApiClient.DeleteAsync(user.AuthUserId);
 
             await _userRepository.DeleteAsync(user);
+            await _unitOfWork.SaveChangesAsync();
         }
-        
-        public async Task ActivateUserAsync(int userId)
+
+        public async Task ActivateAsync(int userId)
         {
             await ModifyUserStatusAsync(userId, u => u.IsActive = true);
         }
-        public async Task DeactivateUserAsync(int userId)
+        public async Task DeactivateAsync(int userId)
         {
             await ModifyUserStatusAsync(userId, u => u.IsActive = false);
         }
@@ -225,36 +222,23 @@ namespace DVLD.Application.Features.Users.Services
         {
             await ModifyUserStatusAsync(userId, u => u.Role = role);
         }
-        private async Task ModifyUserStatusAsync(int userId, Action<UserDto> modifyAction)
+        private async Task ModifyUserStatusAsync(int userId, Action<User> modifyAction)
         {
-            var currentUser = await GetCurrentUserAsync();
-            EnsureAdmin(currentUser);
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null) throw new KeyNotFoundException("User not found.");
 
-            var user = await GetUserByIdAsync(userId);
             modifyAction(user);
 
-            await _userRepository.UpdateAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<bool> ExistsByIdAsync(int uersId)
         {
-            return await _userRepository.IsUserExist(uersId);
+            return await _userRepository.IsExist(uersId);
         }
         public async Task<bool> ExistsByPersonIdAsync(int personId)
         {
-            return await _userRepository.IsUserExistForPersonId(personId);
-        }
-
-        private static UserDto MapToDto(User u)
-        {
-            return new UserDto
-            {
-                UserID = u.UserID,
-                PersonID = u.PersonID,
-                AuthUserId = u.AuthUserId,
-                Role = u.Role,
-                IsActive = u.IsActive,
-            };
+            return await _userRepository.IsExistByPersonId(personId);
         }
 
         public async Task ChangePasswordAsync(ChangePasswordDto dto)

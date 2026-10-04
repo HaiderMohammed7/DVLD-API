@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DVLD.API.Controllers.Driver
 {
     [ApiController]
-    [Route("api/driver")]
+    [Route("api/drivers")]
     [Authorize]
     public class DriverController : ControllerBase
     {
@@ -15,15 +15,15 @@ namespace DVLD.API.Controllers.Driver
             _driverService = driverService;
         }
 
-        [HttpGet("driverLocalLicense/{peronsId}")]
-        public async Task<IActionResult> GetDriverLocalLicensesAsync(int peronsId)
+        [HttpGet("person/{personId}/local-licenses")]
+        public async Task<IActionResult> GetLocalLicenses(int peronsId)
         {
             var result = await _driverService.GetDriverLocalLicensesAsync(peronsId);
             return Ok(result);
         }
 
-        [HttpGet("driverInternationalLicense/{peronsId}")]
-        public async Task<IActionResult> GetDriverInternationalLicensesAsync(int peronsId)
+        [HttpGet("person/{personId}/international-licenses")]
+        public async Task<IActionResult> GetInternationalLicenses(int peronsId)
         {
             var result = await _driverService.GetDriverInternationalLicensesAsync(peronsId);
             return Ok(result);
@@ -37,7 +37,7 @@ namespace DVLD.API.Controllers.Driver
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetDriverById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             var driver = await _driverService.GetDriverByIdAsync(id);
             if (driver == null) return NotFound();

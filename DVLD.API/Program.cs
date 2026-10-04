@@ -17,7 +17,9 @@ using DVLD.Application.Features.Tests.Interfaces;
 using DVLD.Application.Features.Tests.Services;
 using DVLD.Application.Features.Users.Interfaces;
 using DVLD.Application.Features.Users.Services;
+using DVLD.Application.Interfaces.HTTPClient;
 using DVLD.Application.Interfaces.Repositories;
+using DVLD.Application.Interfaces.UintOfWork;
 using DVLD.Infrastructure.Data;
 using DVLD.Infrastructure.HTTPClient;
 using DVLD.Infrastructure.Persistence;
@@ -31,6 +33,7 @@ using DVLD.Infrastructure.Repositories.LocalDrivingLicenseApplications;
 using DVLD.Infrastructure.Repositories.People;
 using DVLD.Infrastructure.Repositories.Tests;
 using DVLD.Infrastructure.Repositories.Users;
+using DVLD.Infrastructure.UintOfWork;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -86,6 +89,7 @@ builder.Services.AddScoped<IDriverService, DriverService>();
 builder.Services.AddScoped<IInternationalLicenseService, InternationalLicenseService>();
 builder.Services.AddScoped<ILocalDrivingLicenseApplicationService, LocalDrivingLicenseApplicationService>();
 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 builder.Services.AddScoped<ICountryRepositroy, CountryRepository>();
@@ -131,8 +135,9 @@ if (app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     var userRepo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+    var uintRepo = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-    await DbSeeder.SeedAdminAsync(userRepo);
+    await DbSeeder.SeedAdminAsync(userRepo, uintRepo);
 }
 
 app.UseHttpsRedirection();

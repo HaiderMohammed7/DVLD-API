@@ -3,12 +3,15 @@ using DVLD.Application.Features.Applications.DTOs;
 using DVLD.Application.Features.Applications.Interfaces;
 using DVLD.Application.Features.Licenses.DTOs;
 using DVLD.Application.Features.Licenses.Interfaces;
+using DVLD.Application.Features.LocalDrivingLicenseApplications.DTOs;
 using DVLD.Application.Features.Users.Interfaces;
 using DVLD.Application.Interfaces.Repositories;
+using DVLD.Application.Interfaces.UintOfWork;
 using DVLD.Domain.Entities;
 using DVLD.Domain.Enums;
 using DriverEntity = DVLD.Domain.Entities.Driver;
 using LicenseEntity = DVLD.Domain.Entities.License;
+using ApplicationEntity = DVLD.Domain.Entities.Applications;
 
 namespace DVLD.Application.Features.Licenses.Services
 {
@@ -18,28 +21,29 @@ namespace DVLD.Application.Features.Licenses.Services
         private readonly ILocalDrivingLicenseApplicationRepository _ldlaRepository;
         private readonly IDriverRepository _driverRepository;
         private readonly IUserService _userService;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ILicenseClassRepository _licenseClassRepository;
-        private readonly IApplicationService _applicationService;
-        private readonly IApplicationTypeService _applicationTypeService;
+        private readonly IApplicationRepository _applicationRepository;
+        private readonly IApplicationTypeRepository _applicationTypeRepository;
         private readonly IDetainedLicenseRepository _detainedLicenseRepository;
-        public LicenseService(ILicenseRepository licenseRepository, ILocalDrivingLicenseApplicationRepository ldlaRepository, IDriverRepository driverRepository, IUserService userService, ILicenseClassRepository licenseClassRepository, IApplicationService applicationService, IDetainedLicenseRepository detainedLicenseRepository, IApplicationTypeService applicationTypeService)
+
+        public LicenseService(IApplicationRepository applicationRepository, IApplicationTypeRepository applicationTypeRepository, ILicenseRepository licenseRepository, ILocalDrivingLicenseApplicationRepository ldlaRepository, IDriverRepository driverRepository, IUserService userService, ILicenseClassRepository licenseClassRepository, IDetainedLicenseRepository detainedLicenseRepository, IApplicationTypeService applicationTypeService, IUnitOfWork unitOfWork)
         {
             _licenseRepository = licenseRepository;
             _ldlaRepository = ldlaRepository;
             _driverRepository = driverRepository;
             _userService = userService;
             _licenseClassRepository = licenseClassRepository;
-            _applicationService = applicationService;
             _detainedLicenseRepository = detainedLicenseRepository;
-            _applicationTypeService = applicationTypeService;
+            _unitOfWork = unitOfWork;
+            _applicationRepository = applicationRepository;
+            _applicationTypeRepository = applicationTypeRepository;
         }
 
-        public async Task<GetLicenseInfoDto?> GetForDetailsAsync(int licenseID)
+        public async Task<GetLicenseInfoDto?> GetByIdAsync(int licenseID)
         {
-            var license = await _licenseRepository.GetForDetailsAsync(licenseID);
-
-            if (license is null)
-                return null;
+            var license = await _licenseRepository.GetByIdAsync(licenseID);
+            if (license is null) return null;
 
             return new GetLicenseInfoDto
             {
@@ -77,70 +81,79 @@ namespace DVLD.Application.Features.Licenses.Services
             };
         }
 
-        public async Task<int> IssueDriverLicenseAsync(IssueDriverLicenseDto dto)
+        public async Task<int> IssueAsync(IssueDriverLicenseDto dto)
         {
-            var ldla = await _ldlaRepository.GetByIdAsync(dto.LocalDrivingLicenseApplicationID);
-            if (ldla == null) throw new Exception("Local Driving License Application not found.");
-
-            var visionPassed = await _ldlaRepository.DoesPassTestType(dto.LocalDrivingLicenseApplicationID,(int)TestTypeEnum.Vision);
-            var writtenPassed = await _ldlaRepository.DoesPassTestType(dto.LocalDrivingLicenseApplicationID, (int)TestTypeEnum.Written);
-            var streetPassed = await _ldlaRepository.DoesPassTestType(dto.LocalDrivingLicenseApplicationID,(int)TestTypeEnum.Street);
-
-            if (!visionPassed || !writtenPassed || !streetPassed) throw new Exception("Person should pass all tests first.");
-
-            var user = await _userService.GetCurrentUserAsync();
-            if (user == null || user.UserID == 0) throw new UnauthorizedAccessException("User is not found.");
-
-            var personId = ldla.Applications!.ApplicantPersonID;
-
-            var driver = await _driverRepository.GetByPersonIdAsync(personId);
-
-            if (driver == null)
+            var id = await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                driver = new DriverEntity
+                var ldla = await _ldlaRepository.GetByIdAsync(dto.LocalDrivingLicenseApplicationID);
+                if (ldla == null) throw new Exception("Local Driving License Application not found.");
+
+                var visionPassed = await _ldlaRepository.DoesPassTestType(dto.LocalDrivingLicenseApplicationID, (int)TestTypeEnum.Vision);
+                var writtenPassed = await _ldlaRepository.DoesPassTestType(dto.LocalDrivingLicenseApplicationID, (int)TestTypeEnum.Written);
+                var streetPassed = await _ldlaRepository.DoesPassTestType(dto.LocalDrivingLicenseApplicationID, (int)TestTypeEnum.Street);
+
+                if (!visionPassed || !writtenPassed || !streetPassed) throw new Exception("Person should pass all tests first.");
+
+                var user = await _userService.GetCurrentUserAsync();
+                if (user == null || user.UserID == 0) throw new UnauthorizedAccessException("User is not found.");
+
+                var personId = ldla.Applications!.ApplicantPersonID;
+
+                var driver = await _driverRepository.GetByPersonIdAsync(personId);
+
+                if (driver == null)
                 {
-                    PersonID = personId,
-                    CreatedByUserID = user.UserID,
-                    CreatedDate = DateTime.Now
+                    driver = new DriverEntity
+                    {
+                        PersonID = personId,
+                        CreatedByUserID = user.UserID,
+                        CreatedDate = DateTime.Now
+                    };
+
+                    await _driverRepository.AddAsync(driver);
+                }
+                else
+                {
+                    var activeLicense = await _licenseRepository.GetActiveLicenseByDriverIdAndClassAsync(driver.DriverID,ldla.LicenseClassID);
+                    if (activeLicense != null) throw new Exception("This person already has an active license for this class.");
+                }
+
+                var licenseClass = await _licenseClassRepository.GetByIdAsync(ldla.LicenseClassID);
+                if (licenseClass == null) throw new Exception("License class not found.");
+
+                var issueDate = DateTime.Now;
+
+                var license = new LicenseEntity
+                {
+                    ApplicationID = ldla.Applications.ApplicationID,
+                    Driver = driver,
+                    LicenseClass = ldla.LicenseClassID,
+                    IssueDate = issueDate,
+                    ExpirationDate = issueDate.AddYears(licenseClass.DefaultValidityLength),
+                    Notes = dto.Notes ?? string.Empty,
+                    PaidFees = licenseClass.ClassFees,
+                    IsActive = true,
+                    IssueReason = 1,
+                    CreatedByUserID = user.UserID
                 };
 
-                await _driverRepository.AddAsync(driver);
-            }
-            var driverId = driver.DriverID;
+                await _licenseRepository.AddAsync(license);
 
-            var activeLicense = await _licenseRepository.GetActiveLicenseByDriverIdAndClassAsync( driver.DriverID,ldla.LicenseClassID);
-            if (activeLicense != null) throw new Exception("This person already has an active license for this class");
+                var application = await _applicationRepository.GetByIdAsync(ldla.ApplicationID);
+                if (application is null) throw new Exception("application not found.");
 
-            var licenseClass = await _licenseClassRepository.GetByIdAsync(ldla.LicenseClassID);
-            if (licenseClass == null) throw new Exception("License class not found.");
+                application.ApplicationStatus = ApplicationStatus.Completed;
+                application.LastStatusDate = DateTime.Now;
 
-            var issueDate = DateTime.Now;
+                return license.LicenseID;
+            });
 
-            var license = new LicenseEntity
-            {
-                ApplicationID = ldla.Applications.ApplicationID,
-                DriverID = driver.DriverID,
-                LicenseClass = ldla.LicenseClassID,
-                IssueDate = issueDate,
-                ExpirationDate = issueDate.AddYears(licenseClass.DefaultValidityLength),
-                Notes = dto.Notes ?? string.Empty,
-                PaidFees = licenseClass.ClassFees,
-                IsActive = true,
-                IssueReason = 1,
-                CreatedByUserID = user.UserID
-            };
-
-            await _licenseRepository.AddAsync(license);
-
-            var updated = await _applicationService.UpdateStatusAsync(ldla.Applications.ApplicationID);
-            if (!updated) throw new Exception("Failed to update application status.");
-
-            return license.LicenseID;
+            return id;
         }
 
-        public async Task<int> DetainLicenseAsync(DetainLicenseDto dto)
+        public async Task<int> DetainAsync(DetainLicenseDto dto)
         {
-            var license = await _licenseRepository.GetForDetailsAsync(dto.LicenseID);
+            var license = await _licenseRepository.GetByIdAsync(dto.LicenseID);
             if (license == null)return -1;
             if (!license.IsActive)return -1;
 
@@ -160,39 +173,164 @@ namespace DVLD.Application.Features.Licenses.Services
             };
 
             await _detainedLicenseRepository.AddAsync(detainedLicense);
+            await _unitOfWork.SaveChangesAsync();
 
             return detainedLicense.DetainID;
         }
-
-        public async Task<int> ReleaseDetainedLicenseAsync(int licenseID)
+        public async Task<int> ReleaseAsync(int licenseID)
         {
-            var detainedLicense = await _detainedLicenseRepository.GetActiveDetainByLicenseIdAsync(licenseID);
-            if (detainedLicense == null) return -1;
-
-            var currentUser = await _userService.GetCurrentUserAsync();
-            if (currentUser == null) throw new Exception("Current user not found.");
-
-            var applicationType = await _applicationTypeService.GetByIdAsync((int)ApplicationTypeEnum.ReleaseDetainedLicense);
-            if (applicationType == null) throw new Exception("Application type not found.");
-
-            var applicationId = await _applicationService.CreateAsync(new CreateApplicationDto
-                {
-                    ApplicantPersonId = detainedLicense.License.Driver.PersonID,
-                    ApplicationTypeId =(int)ApplicationTypeEnum.ReleaseDetainedLicense,
-                    PaidFees = applicationType.Fees
-                });
-
-            var dto = new UpdateDetainLicenseDto()
+            var id = await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                DetainId = detainedLicense.DetainID,
-                releaseDate = DateTime.UtcNow,
-                ReleasedByUserId = currentUser.UserID,
-                ReleaseApplicationId = applicationId,
-            };
+                var detainedLicense = await _detainedLicenseRepository.GetActiveDetainByLicenseIdAsync(licenseID);
+                if (detainedLicense == null) return -1;
 
-            await _detainedLicenseRepository.UpdateForReleaseAsync(dto);
+                var currentUser = await _userService.GetCurrentUserAsync();
+                if (currentUser == null) throw new Exception("Current user not found.");
 
-            return applicationId;
+                var applicationType = await _applicationTypeRepository.GetByIdAsync((int)ApplicationTypeEnum.ReleaseDetainedLicense);
+                if (applicationType == null) throw new Exception("Application type not found.");
+
+                var application = new ApplicationEntity
+                {
+                    ApplicantPersonID = detainedLicense.License.Driver.PersonID,
+                    ApplicationTypeID = (int)ApplicationTypeEnum.ReleaseDetainedLicense,
+                    PaidFees = applicationType.ApplicationFees,
+
+                    ApplicationDate = DateTime.UtcNow,
+                    LastStatusDate = DateTime.UtcNow,
+                    ApplicationStatus = ApplicationStatus.New,
+                    CreatedByUserID = currentUser.UserID
+                };
+
+                await _applicationRepository.AddAsync(application);
+
+                detainedLicense.IsReleased = true;
+                detainedLicense.ReleaseDate = DateTime.UtcNow;
+                detainedLicense.ReleasedByUserID = currentUser.UserID;
+                detainedLicense.ReleaseApplicationID = application.ApplicationID;
+
+                return application.ApplicationID;
+            });
+
+            return id;
+        }
+
+        public async Task<ResponseRenewLicenseDto?> RenewAsync(int licenseId, string? notes)
+        {
+            var response = await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                var oldLicense = await _licenseRepository.GetByIdAsync(licenseId);
+                if (oldLicense == null) return null;
+                if (oldLicense.ExpirationDate.Date >= DateTime.Today) return null;
+
+                var currentUser = await _userService.GetCurrentUserAsync();
+                if (currentUser == null) return null;
+
+                var applicationType = await _applicationTypeRepository.GetByIdAsync((int)ApplicationTypeEnum.RenewDrivingLicense);
+                if (applicationType == null) return null;
+
+                var application = new ApplicationEntity
+                {
+                    ApplicantPersonID = oldLicense.Driver!.PersonID,
+                    ApplicationTypeID = (int)ApplicationTypeEnum.RenewDrivingLicense,
+                    PaidFees = applicationType.ApplicationFees,
+
+                    ApplicationDate = DateTime.UtcNow,
+                    LastStatusDate = DateTime.UtcNow,
+                    ApplicationStatus = ApplicationStatus.New,
+                    CreatedByUserID = currentUser.UserID
+                };
+
+                await _applicationRepository.AddAsync(application);
+
+                var newLicense = new License
+                {
+                    ApplicationID = application.ApplicationID,
+                    DriverID = oldLicense.DriverID,
+                    LicenseClass = oldLicense.LicenseClass,
+                    IssueDate = DateTime.Today,
+                    ExpirationDate = DateTime.Today.AddYears(oldLicense.Classes!.DefaultValidityLength),
+                    Notes = notes ?? string.Empty,
+                    PaidFees = oldLicense.Classes.ClassFees,
+                    IsActive = true,
+                    IssueReason = (byte)IssueReasonEnum.Renew,
+                    CreatedByUserID = currentUser.UserID,
+                };
+
+                await _licenseRepository.AddAsync(newLicense);
+
+                oldLicense.IsActive = false;
+
+                return new ResponseRenewLicenseDto()
+                {
+                    NewLicenseId = newLicense.LicenseID,
+                    NewApplicationId = application.ApplicationID,
+                };
+            });
+
+            return response;         
+        }
+        public async Task<ResponseReplaceLicenseDto?> ReplaceAsync(ReplaceLicenseDto dto)
+        {
+            var response = await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                var oldLicense = await _licenseRepository.GetByIdAsync(dto.LicenseID);
+                if (oldLicense == null) return null;
+                if (!oldLicense.IsActive) return null;
+
+                if (dto.IssueReason != IssueReasonEnum.ReplacementForDamaged && dto.IssueReason != IssueReasonEnum.ReplacementForLost) return null;
+
+                var currentUser = await _userService.GetCurrentUserAsync();
+                if (currentUser == null) return null;
+
+                ApplicationTypeEnum applicationTypeEnum;
+
+                if (dto.IssueReason == IssueReasonEnum.ReplacementForDamaged) applicationTypeEnum = ApplicationTypeEnum.ReplacementDamagedLicense;
+                else applicationTypeEnum = ApplicationTypeEnum.ReplacementLostLicense;
+
+                var applicationType = await _applicationTypeRepository.GetByIdAsync((int)applicationTypeEnum);
+                if (applicationType == null) return null;
+
+                var application = new ApplicationEntity
+                {
+                    ApplicantPersonID = oldLicense.Driver!.PersonID,
+                    ApplicationTypeID = (int)applicationTypeEnum,
+                    PaidFees = applicationType.ApplicationFees,
+
+                    ApplicationDate = DateTime.UtcNow,
+                    LastStatusDate = DateTime.UtcNow,
+                    ApplicationStatus = ApplicationStatus.New,
+                    CreatedByUserID = currentUser.UserID
+                };
+
+                await _applicationRepository.AddAsync(application);
+
+                var newLicense = new License
+                {
+                    ApplicationID = application.ApplicationID,
+                    DriverID = oldLicense.DriverID,
+                    LicenseClass = oldLicense.LicenseClass,
+                    IssueDate = DateTime.Today,
+                    ExpirationDate = oldLicense.ExpirationDate,
+                    Notes = oldLicense.Notes,
+                    PaidFees = oldLicense.PaidFees,
+                    IsActive = true,
+                    IssueReason = (byte)dto.IssueReason,
+                    CreatedByUserID = currentUser.UserID
+                };
+
+                await _licenseRepository.AddAsync(newLicense);
+
+                oldLicense.IsActive = false;
+
+                return new ResponseReplaceLicenseDto()
+                {
+                    NewLicenseId = newLicense.LicenseID,
+                    NewApplicationId = application.ApplicationID,
+                };
+            });
+
+            return response;
         }
 
         public async Task<GetReleaseLicenseInfo?> ReleaseInfo(int licenseId)
@@ -200,7 +338,7 @@ namespace DVLD.Application.Features.Licenses.Services
             var detainedLicense = await _detainedLicenseRepository.GetActiveDetainByLicenseIdAsync(licenseId);
             if (detainedLicense == null) return null;
 
-            var applicationType = await _applicationTypeService.GetByIdAsync((int)ApplicationTypeEnum.ReleaseDetainedLicense);
+            var applicationType = await _applicationTypeRepository.GetByIdAsync((int)ApplicationTypeEnum.ReleaseDetainedLicense);
             if (applicationType == null) throw new Exception("Application type not found.");
 
             return new GetReleaseLicenseInfo()
@@ -208,7 +346,7 @@ namespace DVLD.Application.Features.Licenses.Services
                 DetainId = detainedLicense.DetainID,
                 DetainDate = detainedLicense.DetainDate,
                 FineFees = detainedLicense.FineFees,
-                ApplicationFees = applicationType.Fees
+                ApplicationFees = applicationType.ApplicationFees
             };
         }
 

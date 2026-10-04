@@ -5,6 +5,6 @@ namespace DVLD.Application.Interfaces.Repositories
     public interface ICountryRepositroy
     {
         Task<bool> ExistsAsync(int CountryId);
-        Task<List<CountryDto>> GetCountryNameAsync();
+        Task<List<CountryDto>> GetCountries();
     }
 }

@@ -17,12 +17,10 @@ namespace DVLD.API.Controllers.LocalDrivingLicenseApplications
             _localDrivingLicenseApplicationService = localDrivingLicenseApplicationService;
         }
 
-
         [HttpPost]
         public async Task<IActionResult> Create(CreateLocalDrivingLicenseApplicationDto dto)
         {
             var id = await _localDrivingLicenseApplicationService.AddAsync(dto);
-
             return Ok(id);
         }
 
@@ -45,9 +43,7 @@ namespace DVLD.API.Controllers.LocalDrivingLicenseApplications
         public async Task<IActionResult> GetById(int id)
         {
             var application = await _localDrivingLicenseApplicationService.GetByIdAsync(id);
-
-            if (application is null)
-                return NotFound();
+            if (application is null) return NotFound();
 
             return Ok(application);
         }
@@ -60,7 +56,7 @@ namespace DVLD.API.Controllers.LocalDrivingLicenseApplications
             return Ok(applications);
         }
 
-        [HttpPut("Cancel/{id}")]
+        [HttpPut("{id}/cancel")]
         public async Task<IActionResult> Cancel(int id)
         {
             try
@@ -82,7 +78,7 @@ namespace DVLD.API.Controllers.LocalDrivingLicenseApplications
             {
                 await _localDrivingLicenseApplicationService.DeleteAsync(id);
 
-                return Ok();
+                return NoContent();
             }
             catch (Exception ex)
             {
@@ -90,10 +86,10 @@ namespace DVLD.API.Controllers.LocalDrivingLicenseApplications
             }
         }
 
-        [HttpGet("Details/{id}")]
-        public async Task<IActionResult> GetForDetails(int id)
+        [HttpGet("{id}/details")]
+        public async Task<IActionResult> GetDetails(int id)
         {
-            var application = await _localDrivingLicenseApplicationService.GetForDetailsAsync(id);
+            var application = await _localDrivingLicenseApplicationService.GetInfoByIdAsync(id);
 
             if (application is null)
                 return NotFound();
@@ -101,38 +97,18 @@ namespace DVLD.API.Controllers.LocalDrivingLicenseApplications
             return Ok(application);
         }
 
-        [HttpGet("IsThereAnActiveScheduledTest")]
-        public async Task<IActionResult> IsThereAnActiveScheduledTest(int ldlaId, int testTypeID)
+        [HttpGet("{id}/tests/{testTypeId}/active")]
+        public async Task<IActionResult> HasActiveScheduledTest(int id, int testTypeId)
         {
-            bool result = await _localDrivingLicenseApplicationService.IsThereAnActiveScheduledTest(ldlaId, testTypeID);
-
+            var result = await _localDrivingLicenseApplicationService.IsThereAnActiveScheduledTest(id, testTypeId);
             return Ok(result);
         }
 
-        [HttpGet("DoesPassTestType")]
-        public async Task<IActionResult> DoesPassTestType(int ldlaId, int testTypeID)
+        [HttpGet("{id}/tests/{testTypeId}/passed")]
+        public async Task<IActionResult> HasPassedTestType(int id, int testTypeId)
         {
-            bool result = await _localDrivingLicenseApplicationService.DoesPassTestType(ldlaId, testTypeID);
-
+            var result = await _localDrivingLicenseApplicationService.DoesPassTestType(id, testTypeId);
             return Ok(result);
-        }
-
-        [HttpPost("Renew")]
-        public async Task<IActionResult> Renew(RenewLocalDrivingLicenseDto dto)
-        {
-            var response = await _localDrivingLicenseApplicationService.RenewLocalDrivingLicenseAsync(dto.LicenseID,dto.Notes);
-            if (response == null) return BadRequest("License renewal failed.");
-
-            return Ok(response);
-        }
-
-        [HttpPost("Replace")]
-        public async Task<IActionResult> Replace(ReplaceLicenseDto dto)
-        {
-            var response = await _localDrivingLicenseApplicationService.ReplaceLicenseAsync(dto);
-            if (response == null) return BadRequest("License replacement failed.");
-
-            return Ok(response);
         }
     }
 }

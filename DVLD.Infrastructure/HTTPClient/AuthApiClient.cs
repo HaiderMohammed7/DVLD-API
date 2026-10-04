@@ -1,7 +1,7 @@
 ﻿using DVLD.Application.Features.Auth.DTOs;
 using DVLD.Application.Features.Common.DTOs;
 using DVLD.Application.Features.Users.DTOs;
-using DVLD.Application.Interfaces.Repositories;
+using DVLD.Application.Interfaces.HTTPClient;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -16,7 +16,7 @@ namespace DVLD.Infrastructure.HTTPClient
             _httpClient = httpClient;
         }
 
-        public async Task<List<UserBasicInfoDto>> GetUsersBasicInfoAsync(IEnumerable<int> userIds)
+        public async Task<List<UserBasicInfoDto>> GetBasicInfoAsync(IEnumerable<int> userIds)
         {
             var request = new GetUsersBasicInfoRequest
             {
@@ -31,7 +31,7 @@ namespace DVLD.Infrastructure.HTTPClient
 
             return result ?? new List<UserBasicInfoDto>();
         }
-        public async Task<UserBasicInfoDto?> GetUserByIdAsync(int userId)
+        public async Task<UserBasicInfoDto?> GetByIdAsync(int userId)
         {
             var response = await _httpClient.GetAsync($"api/auth/{userId}");
 
@@ -58,13 +58,13 @@ namespace DVLD.Infrastructure.HTTPClient
 
             return result!.Data;
         }
-        public async Task UpdateUserAsync(int authUserId, UpdateAuthUserDto dto)
+        public async Task UpdateAsync(int authUserId, UpdateAuthUserDto dto)
         {
             var response = await _httpClient.PutAsJsonAsync($"api/auth/{authUserId}", dto);
 
             response.EnsureSuccessStatusCode();
         }
-        public async Task DeleteUserAsync(int authUserId)
+        public async Task DeleteAsync(int authUserId)
         {
             var response = await _httpClient.DeleteAsync($"api/auth/{authUserId}");
 

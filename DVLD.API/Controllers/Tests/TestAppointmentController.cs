@@ -7,7 +7,7 @@ namespace DVLD.API.Controllers.Tests
 {
     [Authorize]
     [ApiController]
-    [Route("api/TestAppointment")]
+    [Route("api/test-appointments")]
     public class TestAppointmentController : ControllerBase
     {
         private readonly ITestAppointmentService _testAppointmentService;
@@ -20,9 +20,7 @@ namespace DVLD.API.Controllers.Tests
         public async Task<IActionResult> GetById(int id)
         {
             var testAppointment = await _testAppointmentService.GetByIdAsync(id);
-
-            if (testAppointment is null)
-                return NotFound();
+            if (testAppointment is null) return NotFound();
 
             return Ok(testAppointment);
         }
@@ -31,19 +29,17 @@ namespace DVLD.API.Controllers.Tests
         public async Task<IActionResult> GetAll()
         {
             var result = await _testAppointmentService.GetAllAsync();
-
             return Ok(result);
         }
 
-        [HttpPost("Schedule")]
+        [HttpPost("schedule")]
         public async Task<IActionResult> Schedule(ScheduleTestDto dto)
         {
             var result = await _testAppointmentService.ScheduleTestAsync(dto);
-
             return Ok(result);
         }
 
-        [HttpPut("Update")]
+        [HttpPut("update")]
         public async Task<IActionResult> Update(UpdateTestAppointmentDto dto)
         {
             var result = await _testAppointmentService.UpdateAppointmentDateAsync(dto);
@@ -52,20 +48,19 @@ namespace DVLD.API.Controllers.Tests
             return NoContent();
         }
 
-        [HttpGet("ScheduleInfo/{localDrivingLicenseApplicationID}/{testTypeID}")]
-        public async Task<IActionResult> GetScheduleTestInfo(int localDrivingLicenseApplicationID, int testTypeID)
+        [HttpGet("schedule-info/{localDrivingLicenseApplicationId}/{testTypeId}")]
+        public async Task<IActionResult> GetScheduleInfo(int localDrivingLicenseApplicationId, int testTypeId)
         {
-            var result = await _testAppointmentService.GetScheduleTestInfoAsync(localDrivingLicenseApplicationID,testTypeID);
+            var result = await _testAppointmentService.GetScheduleTestInfoAsync(localDrivingLicenseApplicationId, testTypeId);
             if (result == null) return NotFound("Local Driving License Application not found.");
 
             return Ok(result);
         }
 
-        [HttpGet("ScheduledTestInfo/{testAppointmentID}")]
-        public async Task<IActionResult> GetScheduledTestInfo(int testAppointmentID)
+        [HttpGet("{testAppointmentId}/scheduled-info")]
+        public async Task<IActionResult> GetScheduledTestInfo(int testAppointmentId)
         {
-            var result = await _testAppointmentService.GetScheduledTestInfoAsync(testAppointmentID);
-
+            var result = await _testAppointmentService.GetScheduledTestInfoAsync(testAppointmentId);
             if (result == null) return NotFound("Test Appointment not found.");
 
             return Ok(result);

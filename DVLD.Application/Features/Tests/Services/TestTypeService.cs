@@ -1,16 +1,19 @@
 ﻿using DVLD.Application.Features.Tests.DTOs;
 using DVLD.Application.Features.Tests.Interfaces;
 using DVLD.Application.Interfaces.Repositories;
+using DVLD.Application.Interfaces.UintOfWork;
 
 namespace DVLD.Application.Features.Tests.Services
 {
     public class TestTypeService : ITestTypeService
     {
         private readonly ITestTypeRepository _repository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public TestTypeService(ITestTypeRepository repository)
+        public TestTypeService(ITestTypeRepository repository, IUnitOfWork unitOfWork)
         {
             _repository = repository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<IEnumerable<TestTypeListDto>> GetAllAsync()
@@ -29,9 +32,7 @@ namespace DVLD.Application.Features.Tests.Services
         public async Task<GetTestTypeDto?> GetByIdAsync(int id)
         {
             var testType = await _repository.GetByIdAsync(id);
-
-            if (testType == null)
-                return null;
+            if (testType == null) return null;
 
             return new GetTestTypeDto
             {
@@ -45,15 +46,13 @@ namespace DVLD.Application.Features.Tests.Services
         public async Task UpdateAsync(int id, UpdateTestTypeDto dto)
         {
             var testType = await _repository.GetByIdAsync(id);
-
-            if (testType == null)
-                throw new Exception($"Test Type with ID = {id} not found.");
+            if (testType == null) throw new Exception($"Test Type with ID = {id} not found.");
 
             testType.TestTypeTitle = dto.Title;
             testType.TestTypeDescription = dto.Description;
             testType.TestTypeFees = dto.Fees;
 
-            await _repository.UpdateAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

@@ -14,14 +14,13 @@ namespace DVLD.Infrastructure.Repositories.Licenses
             _context = context;
         }
 
-        public async Task<List<LicenseClass>> GetAllAsync()
-        {
-            return await _context.LicenseClass.OrderBy(c => c.ClassName).ToListAsync();
-        }
-
         public async Task<LicenseClass?> GetByIdAsync(int id)
         {
             return await _context.LicenseClass.FirstOrDefaultAsync(x => x.LicenseClassID == id);
+        }
+        public async Task<List<LicenseClass>> GetAllAsync()
+        {
+            return await _context.LicenseClass.OrderBy(c => c.ClassName).ToListAsync();
         }
     }
 }

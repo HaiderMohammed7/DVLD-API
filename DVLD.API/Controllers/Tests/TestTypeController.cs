@@ -20,18 +20,15 @@ namespace DVLD.API.Controllers.Tests
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var testType = await _testTypeService.GetAllAsync();
-
-            return Ok(testType);
+            var testTypes = await _testTypeService.GetAllAsync();
+            return Ok(testTypes);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var testType = await _testTypeService.GetByIdAsync(id);
-
-            if (testType is null)
-                return NotFound();
+            if (testType is null) return NotFound();
 
             return Ok(testType);
         }
@@ -41,9 +38,7 @@ namespace DVLD.API.Controllers.Tests
         public async Task<IActionResult> Update(int id, UpdateTestTypeDto dto)
         {
             var testType = await _testTypeService.GetByIdAsync(id);
-
-            if (testType is null)
-                return NotFound();
+            if (testType is null) return NotFound();
 
             await _testTypeService.UpdateAsync(id, dto);
 

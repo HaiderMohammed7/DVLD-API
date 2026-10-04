@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DVLD.API.Controllers.InternationalLicense
 {
     [ApiController]
-    [Route("api/inernationalLicense")]
+    [Route("api/international-licenses")]
     [Authorize]
     public class InternationalLicenseController : ControllerBase
     {
@@ -16,15 +16,15 @@ namespace DVLD.API.Controllers.InternationalLicense
             _internationalLicenseService = internationalLicenseService;
         }
 
-        [HttpGet("Info/{internationalLicenseId}")]
-        public async Task<IActionResult> GetInternationalLicenseInfo(int internationalLicenseId)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            var result = await _internationalLicenseService.GetInternationalLicenseInfoAsync(internationalLicenseId);
+            var result = await _internationalLicenseService.GetInternationalLicenseInfoAsync(id);
             if (result == null) return NotFound("International License not found.");
             return Ok(result);
         }
 
-        [HttpPost("Issue")]
+        [HttpPost("issue")]
         public async Task<IActionResult> IssueInternationalLicense(IssueInternationalLicenseDto dto)
         {
             var internationalLicenseId = await _internationalLicenseService.IssueInternationalLicenseAsync(dto.LocalLicenseID);

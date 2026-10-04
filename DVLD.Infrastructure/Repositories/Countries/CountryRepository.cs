@@ -19,7 +19,7 @@ namespace DVLD.Infrastructure.Repositories.Countries
             return await _context.Countries.AnyAsync(c => c.CountryID == CountryId);
         }
 
-        public async Task<List<CountryDto>> GetCountryNameAsync()
+        public async Task<List<CountryDto>> GetCountries()
         {
             return await _context.Countries.OrderBy(c => c.CountryName).Select(c => new CountryDto
             {

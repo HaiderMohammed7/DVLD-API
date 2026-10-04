@@ -14,17 +14,14 @@ namespace DVLD.Infrastructure.Repositories.Driver
             _context = context;
         }
 
+        public async Task<DriverEntity?> GetByIdAsync(int driverId)
+        {
+            return await _context.Drivers.FindAsync(driverId);
+        }
         public async Task<DriverEntity?> GetByPersonIdAsync(int personId)
         {
             return await _context.Drivers.FirstOrDefaultAsync(x => x.PersonID == personId);
         }
-
-        public async Task AddAsync(DriverEntity driver)
-        {
-            await _context.Drivers.AddAsync(driver);
-            await _context.SaveChangesAsync();
-        }
-
         public async Task<List<DriverListDto>> GetAllDrivers()
         {
             return await _context.Drivers
@@ -36,12 +33,12 @@ namespace DVLD.Infrastructure.Repositories.Driver
                    FullName = d.Person!.FirstName + " " + d.Person.SecondName + " " + d.Person.LastName,
                    CreatedDate = d.CreatedDate,
                    IsActive = d.Licenses.Any(l => l.IsActive),
-               }) .AsNoTracking().ToListAsync();
+               }).AsNoTracking().ToListAsync();
         }
 
-        public async Task<DriverEntity?> GetByIdAsync(int driverId)
+        public async Task AddAsync(DriverEntity driver)
         {
-            return await _context.Drivers.FindAsync(driverId);
-        }
+            await _context.Drivers.AddAsync(driver);
+        }    
     }
 }

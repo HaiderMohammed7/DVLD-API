@@ -21,17 +21,6 @@ namespace DVLD.Application.Features.Driver.Services
         {
             return await _international.GetDriverInternationalLicensesAsync(personId);
         }
-
-        public async Task<List<GetDriverLocalLicenseDto>> GetDriverLocalLicensesAsync(int personId)
-        {
-            return await _LicenseRepository.GetDriverLocalLicensesAsync(personId);
-        }
-
-        public async Task<List<DriverListDto>> GetAllAsync()
-        {
-            return await _DriverRepository.GetAllDrivers();
-        }
-
         public async Task<DriverInfoDto> GetDriverByIdAsync(int driverId)
         {
             var driver = await _DriverRepository.GetByIdAsync(driverId);
@@ -44,5 +33,13 @@ namespace DVLD.Application.Features.Driver.Services
                 CreatedDate = driver.CreatedDate,
             };
         }
+        public async Task<List<GetDriverLocalLicenseDto>> GetDriverLocalLicensesAsync(int personId)
+        {
+            return await _LicenseRepository.GetDriverLocalLicensesAsync(personId);
+        }
+        public async Task<List<DriverListDto>> GetAllAsync()
+        {
+            return await _DriverRepository.GetAllDrivers();
+        }    
     }
 }

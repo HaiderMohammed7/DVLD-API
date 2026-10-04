@@ -1,13 +1,12 @@
-﻿using DVLD.Application.Features.Licenses.DTOs;
-using DVLD.Domain.Entities;
+﻿using DVLD.Domain.Entities;
 
 namespace DVLD.Application.Interfaces.Repositories
 {
     public interface IDetainedLicenseRepository
     {
-        Task<DetainedLicense?> GetActiveDetainByLicenseIdAsync(int licenseId);
-        Task AddAsync(DetainedLicense detainedLicense);
-        Task UpdateForReleaseAsync(UpdateDetainLicenseDto dto);
+        Task<DetainedLicense?> GetActiveDetainByLicenseIdAsync(int licenseId);    
         Task<List<DetainedLicense>> GetDetainedList();
+
+        Task AddAsync(DetainedLicense detainedLicense);
     }
 }

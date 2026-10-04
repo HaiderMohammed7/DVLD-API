@@ -33,7 +33,6 @@ namespace DVLD.Infrastructure.Repositories.InternationalLicense
                     Gendor = x.Driver.Person.Gendor
                 }).FirstOrDefaultAsync();
         }
-
         public async Task<List<GetDriverInternationalLicenseDto>> GetDriverInternationalLicensesAsync(int personId)
         {
             return await _context.InternationalLicenses.Where(il => il.Driver!.PersonID == personId)
@@ -48,21 +47,18 @@ namespace DVLD.Infrastructure.Repositories.InternationalLicense
                     IsActive = il.IsActive
                 }).ToListAsync();
         }
-
         public async Task<InternationalEntity?> GetActiveByDriverIdAsync(int driverId)
         {
             return await _context.InternationalLicenses.FirstOrDefaultAsync(x => x.DriverID == driverId && x.IsActive);
+        }
+        public async Task<List<InternationalEntity>> GetAllAsync()
+        {
+            return await _context.InternationalLicenses.AsNoTracking().ToListAsync();
         }
 
         public async Task AddAsync(InternationalEntity entity)
         {
             await _context.InternationalLicenses.AddAsync(entity);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<List<InternationalEntity>> GetAllAsync()
-        {
-            return await _context.InternationalLicenses.AsNoTracking().ToListAsync();
-        }
+        }   
     }
 }

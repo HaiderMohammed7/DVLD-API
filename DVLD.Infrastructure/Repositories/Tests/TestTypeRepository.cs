@@ -18,15 +18,9 @@ namespace DVLD.Infrastructure.Repositories.Tests
         {
             return await _context.TestTypes.AsNoTracking().ToListAsync();
         }
-
         public async Task<TestType?> GetByIdAsync(int id)
         {
             return await _context.TestTypes.FirstOrDefaultAsync(x => x.TestTypeID == id);
-        }
-
-        public async Task UpdateAsync()
-        {
-            await _context.SaveChangesAsync();
         }
     }
 }

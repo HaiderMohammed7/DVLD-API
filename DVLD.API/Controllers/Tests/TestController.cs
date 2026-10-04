@@ -7,7 +7,7 @@ namespace DVLD.API.Controllers.Tests
 {
     [Authorize]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/tests")]
     public class TestController : ControllerBase
     {
         private readonly ITestService _testService;
@@ -17,7 +17,7 @@ namespace DVLD.API.Controllers.Tests
             _testService = testService;
         }
 
-        [HttpPost("Conduct")]
+        [HttpPost("conduct")]
         public async Task<IActionResult> Conduct(ConductTestDto dto)
         {
             await _testService.ConductTestAsync(dto);
@@ -26,12 +26,10 @@ namespace DVLD.API.Controllers.Tests
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetByIdAsync(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             var test = await _testService.GetByIdAsync(id);
-
-            if (test is null)
-                return NotFound();
+            if (test is null) return NotFound();
 
             return Ok(test);
         }

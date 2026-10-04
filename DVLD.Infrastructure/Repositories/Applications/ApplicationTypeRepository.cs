@@ -13,19 +13,13 @@ namespace DVLD.Infrastructure.Repositories.Applications
             _context = context;
         }
 
-        public async Task<List<ApplicationType>> GetAllAsync()
-        {
-            return await _context.ApplicationTypes.AsNoTracking().ToListAsync();
-        }
-
         public async Task<ApplicationType?> GetByIdAsync(int id)
         {
             return await _context.ApplicationTypes.FirstOrDefaultAsync(x => x.ApplicationTypeID == id);
         }
-
-        public async Task UpdateAsync()
+        public async Task<List<ApplicationType>> GetAllAsync()
         {
-            await _context.SaveChangesAsync();
-        }
+            return await _context.ApplicationTypes.AsNoTracking().ToListAsync();
+        }  
     }
 }

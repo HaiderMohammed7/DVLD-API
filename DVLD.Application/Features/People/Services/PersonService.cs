@@ -1,7 +1,9 @@
 ﻿using DVLD.Application.Features.Auth.Interfaces;
+using DVLD.Application.Features.Common.DTOs;
 using DVLD.Application.Features.People.DTOs;
 using DVLD.Application.Features.People.Interfaces;
 using DVLD.Application.Interfaces.Repositories;
+using DVLD.Application.Interfaces.UintOfWork;
 using DVLD.Domain.Entities;
 
 namespace DVLD.Application.Features.People.Services
@@ -11,48 +13,45 @@ namespace DVLD.Application.Features.People.Services
         private readonly IPersonRepository _repo;
         private readonly ICurrentUserService _currentUser;
         private readonly ICountryRepositroy _country;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public PersonService(IPersonRepository repo, ICurrentUserService currentUserService, ICountryRepositroy country)
+        public PersonService(IPersonRepository repo, ICurrentUserService currentUserService, ICountryRepositroy country, IUnitOfWork unitOfWork)
         {
             _repo = repo;
             _currentUser = currentUserService;
             _country = country;
+            _unitOfWork = unitOfWork;
         }
 
-        public async Task<PersonDto> GetMyProfileAsync()
+        public async Task<PersonDto?> GetMyProfileAsync()
         {
             var authUserId = _currentUser.AuthUserId;
 
             var Person = await _repo.GetByAuthUserIdAsync(authUserId);
-
-            if (Person == null)
-                throw new Exception("Profile not found");
+            if (Person == null) return null;
 
             return MapToDto(Person);
         }
         public async Task<PersonDto?> GetByIdAsync(int personId)
         {
             var person = await _repo.GetByIdAsync(personId);
-
-            if (person == null)
-                return null;
+            if (person == null) return null;
 
             return MapToDto(person);
         }
         public async Task<PersonDto?> GetByNationalNoAsync(string nationalNo)
         {
             var person = await _repo.GetByNationalNoAsync(nationalNo);
-
             if (person == null) return null;
 
             return MapToDto(person);
         }
-        public async Task<List<PeopleListDto?>> GetAllAsync()
+        public async Task<List<PeopleListDto>> GetAllAsync()
         {
             return await _repo.GetAllAsync();
         }
 
-        public async Task<PersonDto> CreateAsync(CreatePersonDto request)
+        public async Task<int> CreateAsync(CreatePersonDto request)
         {
             await ValidateCreateRequestAsync(request);
 
@@ -72,16 +71,15 @@ namespace DVLD.Application.Features.People.Services
                 NationalityCountryID = request.NationalityCountryID,
             };
 
-            var createdPerson = await _repo.AddAsync(person);
+            await _repo.AddAsync(person);
+            await _unitOfWork.SaveChangesAsync();
 
-            return MapToDto(createdPerson);
+            return person.PersonID;
         }
-        public async Task<bool> UpdateAsync( int personId, UpdatePersonDto request)
+        public async Task UpdateAsync(int personId, UpdatePersonDto request)
         {
             var person = await _repo.GetByIdAsync(personId);
-
-            if (person == null)
-                return false;
+            if (person == null) throw new Exception("Person not found.");
 
             await ValidateUpdateRequestAsync(personId, request);
 
@@ -97,17 +95,16 @@ namespace DVLD.Application.Features.People.Services
             person.DateOfBirth = request.DateOfBirth;
             person.Gendor = request.Gendor;
             person.NationalityCountryID = request.NationalityCountryID;
-
-            return await _repo.UpdateAsync();
+            
+            await _unitOfWork.SaveChangesAsync();
         }
-        public async Task<bool> DeleteAsync(int personId)
+        public async Task DeleteAsync(int personId)
         {
-            var exists = await _repo.ExistsByIdAsync(personId);
+            var person = await _repo.GetByIdAsync(personId);
+            if (person == null) throw new Exception("persono not found.");
 
-            if (!exists)
-                return false;
-
-            return await _repo.DeleteAsync(personId);
+            await _repo.DeleteAsync(person);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<bool> ExistsByIdAsync(int personId)
@@ -175,8 +172,7 @@ namespace DVLD.Application.Features.People.Services
 
         private async Task ValidateUpdateRequestAsync(int personId,UpdatePersonDto request)
         {
-            if (string.IsNullOrWhiteSpace(request.NationalNo))
-                throw new Exception("National Number is required");
+            if (string.IsNullOrWhiteSpace(request.NationalNo)) throw new Exception("National Number is required");
 
             var personWithSameNationalNo = await _repo.GetByNationalNoAsync(request.NationalNo);
 
@@ -213,6 +209,11 @@ namespace DVLD.Application.Features.People.Services
         public async Task<string?> GetCountryNameByIdAsync(int personId)
         {
             return await _repo.GetCountryNameByIdAsync(personId);
+        }
+
+        public async Task<List<CountryDto>> GetCountries()
+        {
+            return await _country.GetCountries();
         }
     }
 }

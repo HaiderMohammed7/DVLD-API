@@ -2,6 +2,7 @@
 using DVLD.Application.Features.Tests.Interfaces;
 using DVLD.Application.Features.Users.Interfaces;
 using DVLD.Application.Interfaces.Repositories;
+using DVLD.Application.Interfaces.UintOfWork;
 using DVLD.Domain.Entities;
 
 namespace DVLD.Application.Features.Tests.Services
@@ -11,12 +12,14 @@ namespace DVLD.Application.Features.Tests.Services
         private readonly ITestRepository _testRepository;
         private readonly ITestAppointmentRepository _testAppointmentRepository;
         private readonly IUserService _userService;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public TestService(ITestRepository testRepository,ITestAppointmentRepository testAppointmentRepository,IUserService userService)
+        public TestService(ITestRepository testRepository,ITestAppointmentRepository testAppointmentRepository,IUserService userService, IUnitOfWork unitOfWork)
         {
             _testRepository = testRepository;
             _testAppointmentRepository = testAppointmentRepository;
             _userService = userService;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task ConductTestAsync(ConductTestDto dto)
@@ -41,14 +44,14 @@ namespace DVLD.Application.Features.Tests.Services
 
             await _testRepository.AddAsync(test);
 
-            var isLocked = await _testAppointmentRepository.LockAppointmentAsync(dto.TestAppointmentID);
-            if (!isLocked) throw new Exception("Failed to lock the test appointment.");
+            appointment.IsLocked = true;
+
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<GetTestInfoDto> GetByIdAsync(int id)
         {
             var test = await _testRepository.GetByIdAsync(id);
-
             if (test == null) return null;
 
             return new GetTestInfoDto()

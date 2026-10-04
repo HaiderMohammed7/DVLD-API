@@ -2,7 +2,7 @@
 {
     public class RenewLocalDrivingLicenseDto
     {
-        public int LicenseID { get; set; }
+        public int LicenseId { get; set; }
         public string? Notes { get; set; }
     }
 }

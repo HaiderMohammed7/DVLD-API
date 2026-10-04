@@ -18,9 +18,7 @@ namespace DVLD.Infrastructure.Repositories.People
         public async Task<Person?> GetByAuthUserIdAsync(int authUserId)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.AuthUserId == authUserId);
-
-            if (user == null)
-                return null;
+            if (user == null) return null;
 
             return await _context.People.FirstOrDefaultAsync(p => p.PersonID == user.PersonID);
         }
@@ -58,26 +56,13 @@ namespace DVLD.Infrastructure.Repositories.People
                     }).ToListAsync();
         }
 
-        public async Task<Person> AddAsync(Person person)
+        public async Task AddAsync(Person person)
         {
             await _context.People.AddAsync(person);
-            await _context.SaveChangesAsync();
-
-            return person;
         }
-        public async Task<bool> UpdateAsync()
+        public async Task DeleteAsync(Person person)
         {
-            return await _context.SaveChangesAsync() > 0;
-        }
-        public async Task<bool> DeleteAsync(int personId)
-        {
-            var person = await _context.People.FindAsync(personId);
-
-            if (person == null) return false;
-
             _context.People.Remove(person);       
-
-            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> ExistsByNationalNoAsync(string nationalNo)

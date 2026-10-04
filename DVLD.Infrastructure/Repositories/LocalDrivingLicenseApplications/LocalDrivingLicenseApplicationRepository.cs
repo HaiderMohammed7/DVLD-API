@@ -16,27 +16,13 @@ namespace DVLD.Infrastructure.Repositories.LocalDrivingLicenseApplications
             _context = context;
         }
 
-        public async Task AddAsync(LocalDrivingLicenseApplication application)
+        public async Task AddAsync(LocalDrivingLicenseApplication ldla)
         {
-            await _context.LocalDrivingLicenseApplications.AddAsync(application);
-            await _context.SaveChangesAsync();
+            await _context.LocalDrivingLicenseApplications.AddAsync(ldla);
         }
-        public async Task UpdateAsync()
+        public async Task DeleteAsync(LocalDrivingLicenseApplication ldla)
         {
-            await _context.SaveChangesAsync();
-        }
-        public async Task<bool> DeleteAsync(int id)
-        {
-            var application = await _context.LocalDrivingLicenseApplications.FirstOrDefaultAsync(x => x.LocalDrivingLicenseApplicationID == id);
-
-            if (application is null)
-                return false;
-
-            _context.LocalDrivingLicenseApplications.Remove(application);
-
-            await _context.SaveChangesAsync();
-
-            return true;
+            _context.LocalDrivingLicenseApplications.Remove(ldla);
         }
 
         public async Task<bool> HasActiveApplicationAsync(int personId, int licenseClassId)
@@ -46,7 +32,6 @@ namespace DVLD.Infrastructure.Repositories.LocalDrivingLicenseApplications
                     x.Applications.ApplicantPersonID == personId &&
                     x.Applications.ApplicationStatus != ApplicationStatus.Cancelled);
         }
-
         public async Task<bool> HasActiveApplicationAsync(int personId, int licenseClassId,int excludeApplicationId)
         {
             return await _context.LocalDrivingLicenseApplications.AnyAsync(x =>
@@ -59,21 +44,14 @@ namespace DVLD.Infrastructure.Repositories.LocalDrivingLicenseApplications
         public async Task<LocalDrivingLicenseApplication?> GetByIdAsync(int id)
         {
             return await _context.LocalDrivingLicenseApplications.Include(x => x.Applications)
-                .FirstOrDefaultAsync(x => x.LocalDrivingLicenseApplicationID == id);
+                    .ThenInclude(x => x.Licenses).Include(x => x.LicenseClass).Include(x => x.TestAppointments)
+                    .ThenInclude(x => x.Tests).FirstOrDefaultAsync(x => x.LocalDrivingLicenseApplicationID == id);
         }
-
         public async Task<List<LocalDrivingLicenseApplication>> GetAllAsync()
         {
             return await _context.LocalDrivingLicenseApplications.Include(x => x.Applications)
                     .ThenInclude(x => x.Person).Include(x => x.LicenseClass).Include(x => x.TestAppointments)
                     .ThenInclude(x => x.Tests).ToListAsync();
-        }
-
-        public async Task<LocalDrivingLicenseApplication?> GetForDetailsAsync(int id)
-        {
-            return await _context.LocalDrivingLicenseApplications.Include(x => x.Applications)
-                    .ThenInclude(x => x.Licenses).Include(x => x.LicenseClass).Include(x => x.TestAppointments)
-                    .ThenInclude(x => x.Tests).FirstOrDefaultAsync(x => x.LocalDrivingLicenseApplicationID == id);
         }
 
         public async Task<bool> DoesPassTestType(int localDrivingLicenseApplicationID,int testTypeID)

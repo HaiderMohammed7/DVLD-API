@@ -10,9 +10,8 @@ namespace DVLD.Application.Interfaces.Repositories
         Task<Person?> GetByNationalNoAsync(string nationalNo);
         Task<List<PeopleListDto>> GetAllAsync();
 
-        Task<Person> AddAsync(Person person);
-        Task<bool> UpdateAsync();
-        Task<bool> DeleteAsync(int personId);
+        Task AddAsync(Person person);
+        Task DeleteAsync(Person person);
 
         Task<bool> ExistsByNationalNoAsync(string nationalNo);
         Task<bool> ExistsByIdAsync(int personId);

@@ -2,6 +2,6 @@
 {
     public class ReleaseDetainedLicenseDto
     {
-        public int licenseId {  get; set; }
+        public int LicenseId {  get; set; }
     }
 }

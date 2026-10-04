@@ -7,20 +7,21 @@ namespace DVLD.Application.Features.Users.Interfaces
 {
     public interface IUserService
     {
-        Task<User> EnsureUserExistsAsync(int personId);
+        Task<User> EnsureExistsAsync(int personId);
 
-        Task<User> GetCurrentUserAsync();
-        Task<UserDto> GetUserByIdAsync(int userId);
-        Task<UserDto> GetUserByPersonIdAsync(int personID);
+        Task<CurrentUserDto> GetCurrentUserAsync();
+        Task<UserDto?> GetByIdAsync(int userId);
+        Task<UserInfoDto?> GetInfoByIdAsync(int userId);
+        Task<UserDto?> GetByPersonIdAsync(int personId);
         Task<List<UserListDto>> GetAllAsync();
-        Task<UserInfoDto?> GetByIdAsync(int userId);
+        
 
-        Task<int> CreateUserAsync(CreateUserDto dto);
+        Task<int> CreateAsync(CreateUserDto dto);
         Task UpdateAsync(int id, UpdateUserDto dto);
         Task DeleteAsync(int userId);
 
-        Task ActivateUserAsync(int userId);
-        Task DeactivateUserAsync(int userId);
+        Task ActivateAsync(int userId);
+        Task DeactivateAsync(int userId);
         Task AssignRoleAsync(int userId, UserRole role);
 
         Task<bool> ExistsByIdAsync(int uersId);
