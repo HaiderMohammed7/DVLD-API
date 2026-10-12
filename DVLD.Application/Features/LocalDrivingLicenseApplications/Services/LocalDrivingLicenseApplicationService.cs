@@ -122,11 +122,12 @@ namespace DVLD.Application.Features.LocalDrivingLicenseApplications.Services
 
                 var ldla = new LocalDrivingLicenseApplication
                 {
-                    ApplicationID = application.ApplicationID,
+                    Applications = application,
                     LicenseClassID = dto.LicenseClassId
                 };
 
                 await _localRepository.AddAsync(ldla);
+                await _unitOfWork.SaveChangesAsync();
 
                 return ldla.LocalDrivingLicenseApplicationID;
             });

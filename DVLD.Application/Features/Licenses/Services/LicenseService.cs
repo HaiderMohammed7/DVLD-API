@@ -1,5 +1,4 @@
 ﻿using DVLD.Application.DTOs;
-using DVLD.Application.Features.Applications.DTOs;
 using DVLD.Application.Features.Applications.Interfaces;
 using DVLD.Application.Features.Licenses.DTOs;
 using DVLD.Application.Features.Licenses.Interfaces;
@@ -145,6 +144,8 @@ namespace DVLD.Application.Features.Licenses.Services
                 application.ApplicationStatus = ApplicationStatus.Completed;
                 application.LastStatusDate = DateTime.Now;
 
+                await _unitOfWork.SaveChangesAsync();
+
                 return license.LicenseID;
             });
 
@@ -209,6 +210,8 @@ namespace DVLD.Application.Features.Licenses.Services
                 detainedLicense.ReleasedByUserID = currentUser.UserID;
                 detainedLicense.ReleaseApplicationID = application.ApplicationID;
 
+                await _unitOfWork.SaveChangesAsync();
+
                 return application.ApplicationID;
             });
 
@@ -260,6 +263,8 @@ namespace DVLD.Application.Features.Licenses.Services
                 await _licenseRepository.AddAsync(newLicense);
 
                 oldLicense.IsActive = false;
+
+                await _unitOfWork.SaveChangesAsync();
 
                 return new ResponseRenewLicenseDto()
                 {
@@ -322,6 +327,8 @@ namespace DVLD.Application.Features.Licenses.Services
                 await _licenseRepository.AddAsync(newLicense);
 
                 oldLicense.IsActive = false;
+
+                await _unitOfWork.SaveChangesAsync();
 
                 return new ResponseReplaceLicenseDto()
                 {

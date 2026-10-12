@@ -1,5 +1,4 @@
 ﻿using DVLD.Application.DTOs;
-using DVLD.Application.Features.Applications.Interfaces;
 using DVLD.Application.Features.InternationalLicense.Interfaces;
 using DVLD.Application.Features.Users.Interfaces;
 using DVLD.Application.Interfaces.Repositories;
@@ -77,6 +76,7 @@ namespace DVLD.Application.Features.InternationalLicense.Services
                 };
 
                 await _repository.AddAsync(internationalLicense);
+                await _unitOfWork.SaveChangesAsync();
                 return internationalLicense.InternationalLicenseID;
             });
 

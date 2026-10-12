@@ -1,5 +1,4 @@
-﻿using DVLD.Application.Features.Applications.Interfaces;
-using DVLD.Application.Features.Tests.DTOs;
+﻿using DVLD.Application.Features.Tests.DTOs;
 using DVLD.Application.Features.Tests.Interfaces;
 using DVLD.Application.Features.Users.Interfaces;
 using DVLD.Application.Interfaces.Repositories;
@@ -20,7 +19,7 @@ namespace DVLD.Application.Features.Tests.Services
         private readonly IUserService _userService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public TestAppointmentService(IApplicationRepository applicationRepository, IApplicationTypeRepository applicationTypeRepository, ITestAppointmentRepository testAppointmentRepository,ILocalDrivingLicenseApplicationRepository ldlaRepository,ITestTypeRepository testTypeRepository, IApplicationService applicationService, IUserService userService, IUnitOfWork unitOfWork)
+        public TestAppointmentService(IApplicationRepository applicationRepository, IApplicationTypeRepository applicationTypeRepository, ITestAppointmentRepository testAppointmentRepository,ILocalDrivingLicenseApplicationRepository ldlaRepository,ITestTypeRepository testTypeRepository, IUserService userService, IUnitOfWork unitOfWork)
         {
             _applicationRepository = applicationRepository;
             _applicationTypeRepository = applicationTypeRepository;
@@ -103,7 +102,7 @@ namespace DVLD.Application.Features.Tests.Services
                 var previousAppointments = await _testAppointmentRepository.GetByLDLAAndTestTypeAsync(dto.LocalDrivingLicenseApplicationID, dto.TestTypeID);
                 var isFirstTime = !previousAppointments.Any();
 
-                int? retakeApplicationId = null;
+                ApplicationEntity? retakeApplication = null;
 
                 if (!isFirstTime)
                 {
@@ -116,7 +115,7 @@ namespace DVLD.Application.Features.Tests.Services
                     var applicationType = await _applicationTypeRepository.GetByIdAsync((int)ApplicationTypeEnum.RetakeTest);
                     if (applicationType == null) throw new Exception("Application type not found.");
 
-                    var retakeApplication = new ApplicationEntity
+                    retakeApplication = new ApplicationEntity
                     {
                         ApplicantPersonID = ldla.Applications!.ApplicantPersonID,
                         ApplicationTypeID = applicationType.ApplicationTypeID,
@@ -129,8 +128,6 @@ namespace DVLD.Application.Features.Tests.Services
                     };
 
                     await _applicationRepository.AddAsync(retakeApplication);
-
-                    retakeApplicationId = retakeApplication.ApplicationID;
                 }
 
                 var appointment = new TestAppointment
@@ -141,10 +138,12 @@ namespace DVLD.Application.Features.Tests.Services
                     PaidFees = testType.TestTypeFees,
                     CreatedByUserID = currentUser.UserID,
                     IsLocked = false,
-                    RetakeTestApplicationID = retakeApplicationId
+                    Applications = retakeApplication
                 };
 
                 await _testAppointmentRepository.AddAsync(appointment);
+
+                await _unitOfWork.SaveChangesAsync();
 
                 return new ScheduleTestResultDto
                 {

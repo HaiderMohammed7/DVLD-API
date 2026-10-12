@@ -132,12 +132,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-using (var scope = app.Services.CreateScope())
+if(!app.Environment.IsEnvironment("Testing"))
 {
-    var userRepo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-    var uintRepo = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+    using (var scope = app.Services.CreateScope())
+    {
+        var userRepo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var uintRepo = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-    await DbSeeder.SeedAdminAsync(userRepo, uintRepo);
+        await DbSeeder.SeedAdminAsync(userRepo, uintRepo);
+    }
 }
 
 app.UseHttpsRedirection();
@@ -148,3 +151,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program
+{
+}
